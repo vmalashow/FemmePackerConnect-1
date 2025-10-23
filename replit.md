@@ -36,6 +36,7 @@ Preferred communication style: Simple, everyday language.
 - Reusable UI components in `client/src/components/` (UserCard, CommunityPost, FeatureCard)
 - Design system components in `client/src/components/ui/` (shadcn/ui primitives)
 - Custom hooks in `client/src/hooks/` (use-mobile, use-toast)
+- Data files in `client/src/data/` (countries.ts with 100+ countries, languages.ts with 50+ languages and flag emojis)
 
 ### Backend Architecture
 
@@ -69,8 +70,13 @@ Preferred communication style: Simple, everyday language.
 **Schema Design**
 - `users` table: authentication (id, username, password)
 - `profiles` table: comprehensive user profiles with hosting preferences, travel style, interests, languages, availability windows, flags (red/green)
+  - Location fields: country (current), bornIn, previousLocations (array)
+  - Hosting fields: canHost, maxCapacity, maxDuration, preferredDays (array), customPreferredDays
+  - Personal fields: name, bio, aboutMe
+  - Travel fields: languages (array), interests (array), usualStayLength, travelStyle
+  - Safety fields: greenFlags, redFlags
 - UUID primary keys with auto-generation via `gen_random_uuid()`
-- Array columns for multi-value fields (languages, interests, preferences)
+- Array columns for multi-value fields (languages, interests, preferences, previousLocations, preferredDays)
 - Boolean flags for hosting capability and availability flexibility
 
 **Current Implementation Note**
@@ -165,3 +171,49 @@ Preferred communication style: Simple, everyday language.
 - Generated placeholder images stored in `attached_assets/generated_images/`
 - Used for hero sections, community posts, and feature showcases
 - Images follow women-focused travel themes (travelers exploring, hosting connections, solo travel)
+
+## Features
+
+### Profile System
+
+**Autocomplete Components**
+- Country, Born In, Languages, and Previous Locations fields use autocomplete with 2-letter minimum trigger
+- Built with Radix Popover + Command components for accessible, searchable dropdowns
+- Multi-select fields (Languages, Previous Locations) display selected items as removable badges
+- Single-select fields (Country, Born In) display selected value in button text
+
+**Language Display with Flags**
+- Languages shown with flag emoji indicators (🇬🇧 English, 🇪🇸 Spanish, etc.)
+- Flag emojis stored in languages.ts data file mapped to ISO language codes
+- Read mode displays language badges with flag prefix for visual recognition
+- Edit mode includes flags in autocomplete dropdown for easier selection
+
+**Location Fields**
+- Current Location (country): Single-select autocomplete with 100+ countries
+- Born In: Single-select autocomplete for birth country
+- Previous Locations: Multi-select autocomplete for places user has lived
+- All location fields use consistent 2-letter search trigger pattern
+
+**Personal Information**
+- Bio: Brief profile summary (existing field)
+- About Me: Extended personal description with example placeholder showing travel philosophy
+- Helps structure hosting requests and provides context for connections
+
+**Hosting Preferences**
+- Can Host toggle enables hosting-specific fields
+- Maximum Capacity: Number of guests (1-5+)
+- Maximum Duration: Preferred stay length (Weekend, Week, 2 weeks, Month, Longer)
+- Preferred Days: Multi-select for hosting availability (Weekdays, Weekends, Doesn't matter)
+- Custom Preferred Days: Free-text field for specific availability notes (e.g., "First two weeks of month")
+- All hosting fields conditionally shown only when Can Host is enabled
+
+**Travel Preferences**
+- Languages: Multi-select with flag emojis
+- Interests: Multi-select badges for activities/hobbies
+- Usual Stay Length: Dropdown for typical trip duration
+- Travel Style: Dropdown for travel approach (Cultural Explorer, Adventure Seeker, etc.)
+
+**Safety Features**
+- Green Flags: Positive traits and preferences
+- Red Flags: Boundaries and dislikes
+- Helps set expectations and find compatible connections
