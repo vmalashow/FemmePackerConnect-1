@@ -1,4 +1,4 @@
-import { Header } from "@/components/Header";
+import { MobileHeader } from "@/components/MobileHeader";
 import { CommunityPost } from "@/components/CommunityPost";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,10 +10,10 @@ import soloTravelerImage from "@assets/generated_images/Solo_female_traveler_ins
 
 export default function Community() {
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <div className="min-h-screen bg-background pb-16 md:pb-0">
+      <MobileHeader title="Community" />
       
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="container mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <div className="mb-6">

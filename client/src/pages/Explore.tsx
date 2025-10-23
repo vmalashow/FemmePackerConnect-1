@@ -1,4 +1,4 @@
-import { Header } from "@/components/Header";
+import { MobileHeader } from "@/components/MobileHeader";
 import { InteractiveMap } from "@/components/InteractiveMap";
 import { UserCard } from "@/components/UserCard";
 import { Input } from "@/components/ui/input";
@@ -7,10 +7,10 @@ import { Search, SlidersHorizontal } from "lucide-react";
 
 export default function Explore() {
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <div className="min-h-screen bg-background pb-16 md:pb-0">
+      <MobileHeader title="Explore" />
       
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="container mx-auto px-4 py-6">
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
             Explore Members

@@ -1,4 +1,4 @@
-import { Header } from "@/components/Header";
+import { MobileHeader } from "@/components/MobileHeader";
 import { Hero } from "@/components/Hero";
 import { FeatureCard } from "@/components/FeatureCard";
 import { UserCard } from "@/components/UserCard";
@@ -10,12 +10,14 @@ import hostingImage from "@assets/generated_images/Women_connecting_through_host
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <div className="min-h-screen bg-background pb-16 md:pb-0">
+      <div className="md:hidden">
+        <MobileHeader title="FemmePacker" showActions={true} />
+      </div>
       <Hero />
 
-      <section className="py-16 md:py-24">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-8 md:py-16">
+        <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Why Choose FemmePacker?
@@ -104,8 +106,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-16 md:py-24">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-8 md:py-16">
+        <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Community Stories

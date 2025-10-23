@@ -23,9 +23,8 @@ export function Hero() {
           </p>
           <div className="flex flex-wrap gap-4">
             <Button 
-              variant="default" 
               size="lg"
-              className="bg-primary hover:bg-primary border border-primary-border text-primary-foreground"
+              className="bg-chart-2 hover:bg-chart-2 border border-chart-2 text-white"
               data-testid="button-start-journey"
             >
               Start Your Journey

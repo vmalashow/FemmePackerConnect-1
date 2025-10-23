@@ -4,10 +4,12 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { BottomNav } from "@/components/BottomNav";
 import Home from "@/pages/Home";
 import Explore from "@/pages/Explore";
 import Community from "@/pages/Community";
 import AIAssistant from "@/pages/AIAssistant";
+import Profile from "@/pages/Profile";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -17,6 +19,7 @@ function Router() {
       <Route path="/explore" component={Explore} />
       <Route path="/community" component={Community} />
       <Route path="/ai-assistant" component={AIAssistant} />
+      <Route path="/profile" component={Profile} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -29,6 +32,7 @@ export default function App() {
         <TooltipProvider>
           <Toaster />
           <Router />
+          <BottomNav />
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
