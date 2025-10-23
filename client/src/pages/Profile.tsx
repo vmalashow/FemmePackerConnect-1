@@ -7,6 +7,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { 
   Select,
   SelectContent,
@@ -22,8 +35,11 @@ import {
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Info, Plus, X } from "lucide-react";
+import { Info, Plus, X, Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { Profile } from "@shared/schema";
+import { COUNTRIES } from "@/data/countries";
+import { LANGUAGES, getLanguageFlag } from "@/data/languages";
 
 const INTEREST_OPTIONS = [
   "Art & Museums",
@@ -46,10 +62,18 @@ const INTEREST_OPTIONS = [
   "Reading & Literature",
 ];
 
-const LANGUAGE_OPTIONS = [
-  "English", "Spanish", "French", "German", "Italian", "Portuguese", 
-  "Mandarin", "Japanese", "Korean", "Arabic", "Russian", "Dutch",
-  "Swedish", "Norwegian", "Danish", "Polish", "Turkish", "Hindi",
+const MAX_DURATION_OPTIONS = [
+  { value: "weekend", label: "Weekend (2–3 days)" },
+  { value: "week", label: "About a week (4–7 days)" },
+  { value: "2weeks", label: "Up to 2 weeks" },
+  { value: "month", label: "Up to a month" },
+  { value: "longer", label: "Longer stays welcome" },
+];
+
+const PREFERRED_DAYS_OPTIONS = [
+  "Weekdays",
+  "Weekends",
+  "Doesn't matter",
 ];
 
 const STAY_LENGTH_OPTIONS = [
@@ -97,6 +121,16 @@ export default function Profile() {
   const [newCustomTransport, setNewCustomTransport] = useState("");
   const [newCustomStay, setNewCustomStay] = useState("");
   const [newCustomActivity, setNewCustomActivity] = useState("");
+  const [newCustomPreferredDays, setNewCustomPreferredDays] = useState("");
+  
+  const [countryOpen, setCountryOpen] = useState(false);
+  const [countrySearch, setCountrySearch] = useState("");
+  const [bornInOpen, setBornInOpen] = useState(false);
+  const [bornInSearch, setBornInSearch] = useState("");
+  const [languageOpen, setLanguageOpen] = useState(false);
+  const [languageSearch, setLanguageSearch] = useState("");
+  const [previousLocationsOpen, setPreviousLocationsOpen] = useState(false);
+  const [previousLocationsSearch, setPreviousLocationsSearch] = useState("");
 
   const { data: profile, isLoading } = useQuery<Profile>({
     queryKey: ["/api/profile"],
@@ -136,12 +170,14 @@ export default function Profile() {
         availabilityFlexible: true,
         languages: [],
         interests: [],
+        previousLocations: [],
         preferredTransport: [],
         customTransport: [],
         preferredStay: [],
         customStay: [],
         preferredActivities: [],
         customActivities: [],
+        preferredDays: [],
       });
       setIsEditing(true);
     }
@@ -207,13 +243,40 @@ export default function Profile() {
                     Maximum capacity: {profile.maxCapacity} {profile.maxCapacity === 1 ? "person" : "people"}
                   </p>
                 )}
+                {profile.maxDuration && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Max stay duration: {MAX_DURATION_OPTIONS.find(opt => opt.value === profile.maxDuration)?.label}
+                  </p>
+                )}
+                {profile.preferredDays && profile.preferredDays.length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-sm text-muted-foreground">Preferred days:</p>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {profile.preferredDays.map((day) => (
+                        <Badge key={day} variant="secondary" className="text-xs">{day}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {profile.customPreferredDays && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Other: {profile.customPreferredDays}
+                  </p>
+                )}
               </div>
             )}
 
             {profile.bio && (
               <div>
-                <h3 className="font-semibold text-foreground mb-2">About Me</h3>
+                <h3 className="font-semibold text-foreground mb-2">Bio</h3>
                 <p className="text-sm text-muted-foreground">{profile.bio}</p>
+              </div>
+            )}
+
+            {profile.aboutMe && (
+              <div>
+                <h3 className="font-semibold text-foreground mb-2">About Me</h3>
+                <p className="text-sm text-muted-foreground">{profile.aboutMe}</p>
               </div>
             )}
 
@@ -231,12 +294,26 @@ export default function Profile() {
               </div>
             )}
 
+            {profile.previousLocations && profile.previousLocations.length > 0 && (
+              <div>
+                <h3 className="font-semibold text-foreground mb-2">Previous Locations</h3>
+                <div className="flex flex-wrap gap-2">
+                  {profile.previousLocations.map((location) => (
+                    <Badge key={location} variant="outline">{location}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {profile.languages && profile.languages.length > 0 && (
               <div>
                 <h3 className="font-semibold text-foreground mb-2">Languages</h3>
                 <div className="flex flex-wrap gap-2">
                   {profile.languages.map((lang) => (
-                    <Badge key={lang} variant="outline">{lang}</Badge>
+                    <Badge key={lang} variant="outline">
+                      <span className="mr-1">{getLanguageFlag(lang)}</span>
+                      {lang}
+                    </Badge>
                   ))}
                 </div>
               </div>
@@ -307,7 +384,7 @@ export default function Profile() {
           </div>
 
           <div>
-            <Label htmlFor="bio">About Me</Label>
+            <Label htmlFor="bio">Bio</Label>
             <Textarea
               id="bio"
               value={formData.bio || ""}
@@ -315,6 +392,28 @@ export default function Profile() {
               placeholder="Tell us about yourself..."
               rows={3}
               data-testid="input-bio"
+            />
+          </div>
+
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Label htmlFor="about-me">About Me</Label>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Info className="h-4 w-4 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Share your personality, travel philosophy, or what makes you unique</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <Textarea
+              id="about-me"
+              value={formData.aboutMe || ""}
+              onChange={(e) => setFormData({ ...formData, aboutMe: e.target.value })}
+              placeholder="Example: I'm a curious soul who believes the best travel stories happen when you get lost. I love connecting with locals over food, practicing my terrible language skills, and finding hidden gems off the tourist trail."
+              rows={4}
+              data-testid="input-about-me"
             />
           </div>
 
@@ -331,72 +430,375 @@ export default function Profile() {
           </div>
 
           {formData.canHost && (
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Label htmlFor="max-capacity">Maximum Capacity</Label>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Info className="h-4 w-4 text-muted-foreground" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Highest amount of people you can host</p>
-                  </TooltipContent>
-                </Tooltip>
+            <>
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Label htmlFor="max-capacity">Maximum Capacity</Label>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Info className="h-4 w-4 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Highest amount of people you can host</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <Select
+                  value={formData.maxCapacity?.toString() || ""}
+                  onValueChange={(value) => setFormData({ ...formData, maxCapacity: parseInt(value) })}
+                >
+                  <SelectTrigger data-testid="select-max-capacity">
+                    <SelectValue placeholder="Select capacity" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5].map((num) => (
+                      <SelectItem key={num} value={num.toString()}>{num}</SelectItem>
+                    ))}
+                    <SelectItem value="6">5+</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <Select
-                value={formData.maxCapacity?.toString() || ""}
-                onValueChange={(value) => setFormData({ ...formData, maxCapacity: parseInt(value) })}
-              >
-                <SelectTrigger data-testid="select-max-capacity">
-                  <SelectValue placeholder="Select capacity" />
-                </SelectTrigger>
-                <SelectContent>
-                  {[1, 2, 3, 4, 5].map((num) => (
-                    <SelectItem key={num} value={num.toString()}>{num}</SelectItem>
+
+              <div>
+                <Label htmlFor="max-duration">Maximum Duration</Label>
+                <Select
+                  value={formData.maxDuration || ""}
+                  onValueChange={(value) => setFormData({ ...formData, maxDuration: value })}
+                >
+                  <SelectTrigger id="max-duration" data-testid="select-max-duration">
+                    <SelectValue placeholder="How long can guests stay?" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MAX_DURATION_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label>Preferred Days</Label>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {PREFERRED_DAYS_OPTIONS.map((day) => (
+                    <Badge
+                      key={day}
+                      variant={(formData.preferredDays || []).includes(day) ? "default" : "outline"}
+                      className="cursor-pointer hover-elevate active-elevate-2"
+                      onClick={() => toggleArrayItem("preferredDays", day)}
+                      data-testid={`badge-preferred-day-${day.toLowerCase().replace(/\s+/g, "-")}`}
+                    >
+                      {day}
+                    </Badge>
                   ))}
-                  <SelectItem value="6">5+</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                </div>
+                <div className="flex items-center gap-2 mt-2">
+                  <Input
+                    placeholder="Other (write your own)"
+                    value={newCustomPreferredDays}
+                    onChange={(e) => setNewCustomPreferredDays(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter" && newCustomPreferredDays.trim()) {
+                        setFormData({
+                          ...formData,
+                          customPreferredDays: newCustomPreferredDays.trim()
+                        });
+                        setNewCustomPreferredDays("");
+                      }
+                    }}
+                    data-testid="input-custom-preferred-days"
+                  />
+                </div>
+                {formData.customPreferredDays && (
+                  <Badge
+                    variant="default"
+                    className="mt-2 cursor-pointer hover-elevate active-elevate-2"
+                    onClick={() => setFormData({ ...formData, customPreferredDays: undefined })}
+                    data-testid="badge-custom-preferred-days"
+                  >
+                    {formData.customPreferredDays}
+                    <X className="ml-1 h-3 w-3" />
+                  </Badge>
+                )}
+              </div>
+            </>
           )}
 
           <div>
             <Label htmlFor="country">Current Country</Label>
-            <Input
-              id="country"
-              value={formData.country || ""}
-              onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-              placeholder="e.g., USA, Spain, Japan"
-              data-testid="input-country"
-            />
+            <Popover open={countryOpen} onOpenChange={setCountryOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={countryOpen}
+                  className="w-full justify-between"
+                  data-testid="button-country"
+                >
+                  {formData.country || "Select country..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0">
+                <Command>
+                  <CommandInput
+                    placeholder="Type at least 2 letters..."
+                    value={countrySearch}
+                    onValueChange={setCountrySearch}
+                    data-testid="input-country-search"
+                  />
+                  <CommandList>
+                    <CommandEmpty>No country found.</CommandEmpty>
+                    {countrySearch.length >= 2 && (
+                      <CommandGroup>
+                        {COUNTRIES.filter(country =>
+                          country.toLowerCase().includes(countrySearch.toLowerCase())
+                        ).map((country) => (
+                          <CommandItem
+                            key={country}
+                            value={country}
+                            onSelect={() => {
+                              setFormData({ ...formData, country });
+                              setCountryOpen(false);
+                              setCountrySearch("");
+                            }}
+                            data-testid={`option-country-${country.toLowerCase().replace(/\s+/g, "-")}`}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                formData.country === country ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {country}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    )}
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div>
             <Label htmlFor="born-in">Born In</Label>
-            <Input
-              id="born-in"
-              value={formData.bornIn || ""}
-              onChange={(e) => setFormData({ ...formData, bornIn: e.target.value })}
-              placeholder="e.g., New York, London, Tokyo"
-              data-testid="input-born-in"
-            />
+            <Popover open={bornInOpen} onOpenChange={setBornInOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={bornInOpen}
+                  className="w-full justify-between"
+                  data-testid="button-born-in"
+                >
+                  {formData.bornIn || "Select city or country..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0">
+                <Command>
+                  <CommandInput
+                    placeholder="Type at least 2 letters..."
+                    value={bornInSearch}
+                    onValueChange={setBornInSearch}
+                    data-testid="input-born-in-search"
+                  />
+                  <CommandList>
+                    <CommandEmpty>No location found.</CommandEmpty>
+                    {bornInSearch.length >= 2 && (
+                      <CommandGroup>
+                        {COUNTRIES.filter(country =>
+                          country.toLowerCase().includes(bornInSearch.toLowerCase())
+                        ).map((country) => (
+                          <CommandItem
+                            key={country}
+                            value={country}
+                            onSelect={() => {
+                              setFormData({ ...formData, bornIn: country });
+                              setBornInOpen(false);
+                              setBornInSearch("");
+                            }}
+                            data-testid={`option-born-in-${country.toLowerCase().replace(/\s+/g, "-")}`}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                formData.bornIn === country ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {country}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    )}
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Label>Where have you lived before?</Label>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Info className="h-4 w-4 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Helps others understand your background and connection to different places</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <Popover open={previousLocationsOpen} onOpenChange={setPreviousLocationsOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={previousLocationsOpen}
+                  className="w-full justify-between"
+                  data-testid="button-previous-locations"
+                >
+                  {(formData.previousLocations || []).length > 0
+                    ? `${formData.previousLocations!.length} selected`
+                    : "Select locations..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0">
+                <Command>
+                  <CommandInput
+                    placeholder="Type at least 2 letters..."
+                    value={previousLocationsSearch}
+                    onValueChange={setPreviousLocationsSearch}
+                    data-testid="input-previous-locations-search"
+                  />
+                  <CommandList>
+                    <CommandEmpty>No location found.</CommandEmpty>
+                    {previousLocationsSearch.length >= 2 && (
+                      <CommandGroup>
+                        {COUNTRIES.filter(country =>
+                          country.toLowerCase().includes(previousLocationsSearch.toLowerCase())
+                        ).map((country) => {
+                          const isSelected = (formData.previousLocations || []).includes(country);
+                          return (
+                            <CommandItem
+                              key={country}
+                              value={country}
+                              onSelect={() => {
+                                toggleArrayItem("previousLocations", country);
+                              }}
+                              data-testid={`option-previous-location-${country.toLowerCase().replace(/\s+/g, "-")}`}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  isSelected ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {country}
+                            </CommandItem>
+                          );
+                        })}
+                      </CommandGroup>
+                    )}
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+            {(formData.previousLocations || []).length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {formData.previousLocations!.map((location) => (
+                  <Badge
+                    key={location}
+                    variant="default"
+                    className="cursor-pointer hover-elevate active-elevate-2"
+                    onClick={() => toggleArrayItem("previousLocations", location)}
+                    data-testid={`badge-previous-location-${location.toLowerCase().replace(/\s+/g, "-")}`}
+                  >
+                    {location}
+                    <X className="ml-1 h-3 w-3" />
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>
             <Label>Languages</Label>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {LANGUAGE_OPTIONS.map((lang) => (
-                <Badge
-                  key={lang}
-                  variant={(formData.languages || []).includes(lang) ? "default" : "outline"}
-                  className="cursor-pointer hover-elevate active-elevate-2"
-                  onClick={() => toggleArrayItem("languages", lang)}
-                  data-testid={`badge-language-${lang.toLowerCase()}`}
+            <Popover open={languageOpen} onOpenChange={setLanguageOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={languageOpen}
+                  className="w-full justify-between"
+                  data-testid="button-languages"
                 >
-                  {lang}
-                </Badge>
-              ))}
-            </div>
+                  {(formData.languages || []).length > 0
+                    ? `${formData.languages!.length} selected`
+                    : "Select languages..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0">
+                <Command>
+                  <CommandInput
+                    placeholder="Type at least 2 letters..."
+                    value={languageSearch}
+                    onValueChange={setLanguageSearch}
+                    data-testid="input-language-search"
+                  />
+                  <CommandList>
+                    <CommandEmpty>No language found.</CommandEmpty>
+                    {languageSearch.length >= 2 && (
+                      <CommandGroup>
+                        {LANGUAGES.filter(lang =>
+                          lang.name.toLowerCase().includes(languageSearch.toLowerCase())
+                        ).map((lang) => {
+                          const isSelected = (formData.languages || []).includes(lang.name);
+                          return (
+                            <CommandItem
+                              key={lang.name}
+                              value={lang.name}
+                              onSelect={() => {
+                                toggleArrayItem("languages", lang.name);
+                              }}
+                              data-testid={`option-language-${lang.name.toLowerCase()}`}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  isSelected ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              <span className="mr-2">{lang.flag}</span>
+                              {lang.name}
+                            </CommandItem>
+                          );
+                        })}
+                      </CommandGroup>
+                    )}
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+            {(formData.languages || []).length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {formData.languages!.map((lang) => (
+                  <Badge
+                    key={lang}
+                    variant="default"
+                    className="cursor-pointer hover-elevate active-elevate-2"
+                    onClick={() => toggleArrayItem("languages", lang)}
+                    data-testid={`badge-language-${lang.toLowerCase()}`}
+                  >
+                    <span className="mr-1">{getLanguageFlag(lang)}</span>
+                    {lang}
+                    <X className="ml-1 h-3 w-3" />
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>
