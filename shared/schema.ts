@@ -39,6 +39,10 @@ export const profiles = pgTable("profiles", {
   customActivities: text("custom_activities").array(),
   redFlags: text("red_flags"),
   greenFlags: text("green_flags"),
+  instagramHandle: text("instagram_handle"),
+  socialMediaLink: text("social_media_link"),
+  spotifyConnected: boolean("spotify_connected").default(false),
+  spotifyUserId: text("spotify_user_id"),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
