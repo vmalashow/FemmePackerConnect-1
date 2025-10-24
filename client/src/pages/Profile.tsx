@@ -232,12 +232,47 @@ export default function Profile() {
     );
   }
 
+  const renderTravelDialog = () => (
+    <Dialog open={showTravelDialog} onOpenChange={setShowTravelDialog}>
+      <DialogContent data-testid="dialog-travel-intent">
+        <DialogHeader>
+          <DialogTitle>Welcome to FemmePacker!</DialogTitle>
+          <DialogDescription>
+            Your profile is all set up. Are you planning to travel soon?
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="flex gap-2 sm:gap-0">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setShowTravelDialog(false);
+              setLocation("/explore");
+            }}
+            data-testid="button-no-travel"
+          >
+            Not yet - just exploring
+          </Button>
+          <Button
+            onClick={() => {
+              setShowTravelDialog(false);
+              toast({ title: "Great! Let's plan your trip", description: "Hosting request feature coming soon!" });
+            }}
+            data-testid="button-yes-travel"
+          >
+            Yes, planning a trip!
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+
   if (!isEditing && profile) {
     return (
-      <div className="min-h-screen bg-background pb-16 md:pb-0">
-        <MobileHeader title="Profile" showActions={false} />
-        
-        <div className="container mx-auto px-4 py-6 max-w-2xl">
+      <>
+        <div className="min-h-screen bg-background pb-16 md:pb-0">
+          <MobileHeader title="Profile" showActions={false} />
+          
+          <div className="container mx-auto px-4 py-6 max-w-2xl">
           <Card className="p-6 space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold text-foreground">{profile.name || "Your Profile"}</h2>
@@ -416,11 +451,14 @@ export default function Profile() {
           </Card>
         </div>
       </div>
+      {renderTravelDialog()}
+    </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background pb-16 md:pb-0">
+    <>
+      <div className="min-h-screen bg-background pb-16 md:pb-0">
       <MobileHeader title="Edit Profile" showActions={false} />
       
       <div className="container mx-auto px-4 py-6 max-w-2xl">
@@ -1128,38 +1166,7 @@ export default function Profile() {
           </div>
         </Card>
       </div>
-
-      <Dialog open={showTravelDialog} onOpenChange={setShowTravelDialog}>
-        <DialogContent data-testid="dialog-travel-intent">
-          <DialogHeader>
-            <DialogTitle>Welcome to FemmePacker!</DialogTitle>
-            <DialogDescription>
-              Your profile is all set up. Are you planning to travel soon?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowTravelDialog(false);
-                setLocation("/explore");
-              }}
-              data-testid="button-no-travel"
-            >
-              Not yet - just exploring
-            </Button>
-            <Button
-              onClick={() => {
-                setShowTravelDialog(false);
-                toast({ title: "Great! Let's plan your trip", description: "Hosting request feature coming soon!" });
-              }}
-              data-testid="button-yes-travel"
-            >
-              Yes, planning a trip!
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+      {renderTravelDialog()}
+    </>
   );
 }
