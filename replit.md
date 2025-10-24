@@ -8,6 +8,14 @@ FemmePacker is a women-focused travel community platform that connects female tr
 
 Preferred communication style: Simple, everyday language.
 
+## Future Integrations
+
+**Spotify Integration (Deferred)**
+- User requested Spotify connection for profile social proof
+- Replit has connector:ccfg_spotify_01K49R1M6S088SR66BS9A0V4R7 available
+- User dismissed integration setup - can be revisited later if needed
+- Current implementation: Schema includes spotifyConnected and spotifyUserId fields for future use
+
 ## System Architecture
 
 ### Frontend Architecture

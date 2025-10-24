@@ -1163,9 +1163,9 @@ export default function Profile() {
             />
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-4 border-t pt-6">
             <div className="flex items-center gap-2">
-              <h3 className="text-lg font-semibold text-foreground">Social Media</h3>
+              <h3 className="text-lg font-semibold text-foreground">Social Media & Connections</h3>
               <Tooltip>
                 <TooltipTrigger>
                   <Info className="h-4 w-4 text-muted-foreground" />
@@ -1194,7 +1194,7 @@ export default function Profile() {
                 type="url"
                 value={formData.socialMediaLink || ""}
                 onChange={(e) => setFormData({ ...formData, socialMediaLink: e.target.value })}
-                placeholder="https://..."
+                placeholder="https://twitter.com/yourhandle or https://tiktok.com/@yourhandle"
                 data-testid="input-social-link"
               />
             </div>
