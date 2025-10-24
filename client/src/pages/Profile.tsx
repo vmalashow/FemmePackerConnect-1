@@ -268,7 +268,7 @@ export default function Profile() {
 
   if (!isEditing && profile) {
     return (
-      <>
+      <div>
         <div className="min-h-screen bg-background pb-16 md:pb-0">
           <MobileHeader title="Profile" showActions={false} />
           
@@ -452,12 +452,12 @@ export default function Profile() {
         </div>
       </div>
       {renderTravelDialog()}
-    </>
+      </div>
     );
   }
 
   return (
-    <>
+    <div>
       <div className="min-h-screen bg-background pb-16 md:pb-0">
       <MobileHeader title="Edit Profile" showActions={false} />
       
@@ -1166,7 +1166,8 @@ export default function Profile() {
           </div>
         </Card>
       </div>
-      {renderTravelDialog()}
-    </>
+    </div>
+    {renderTravelDialog()}
+    </div>
   );
 }
