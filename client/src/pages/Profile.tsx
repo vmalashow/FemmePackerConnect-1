@@ -122,15 +122,13 @@ export default function Profile() {
   const [newCustomStay, setNewCustomStay] = useState("");
   const [newCustomActivity, setNewCustomActivity] = useState("");
   const [newCustomPreferredDays, setNewCustomPreferredDays] = useState("");
+  const [newCustomInterest, setNewCustomInterest] = useState("");
+  const [newPreviousLocation, setNewPreviousLocation] = useState("");
   
   const [countryOpen, setCountryOpen] = useState(false);
   const [countrySearch, setCountrySearch] = useState("");
-  const [bornInOpen, setBornInOpen] = useState(false);
-  const [bornInSearch, setBornInSearch] = useState("");
   const [languageOpen, setLanguageOpen] = useState(false);
   const [languageSearch, setLanguageSearch] = useState("");
-  const [previousLocationsOpen, setPreviousLocationsOpen] = useState(false);
-  const [previousLocationsSearch, setPreviousLocationsSearch] = useState("");
 
   const { data: profile, isLoading } = useQuery<Profile>({
     queryKey: ["/api/profile"],
@@ -167,7 +165,6 @@ export default function Profile() {
     } else {
       setFormData({
         canHost: false,
-        availabilityFlexible: true,
         languages: [],
         interests: [],
         previousLocations: [],
@@ -263,13 +260,6 @@ export default function Profile() {
                     Other: {profile.customPreferredDays}
                   </p>
                 )}
-              </div>
-            )}
-
-            {profile.bio && (
-              <div>
-                <h3 className="font-semibold text-foreground mb-2">Bio</h3>
-                <p className="text-sm text-muted-foreground">{profile.bio}</p>
               </div>
             )}
 
@@ -430,18 +420,6 @@ export default function Profile() {
               value={formData.name || ""}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               data-testid="input-name"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="bio">Bio</Label>
-            <Textarea
-              id="bio"
-              value={formData.bio || ""}
-              onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-              placeholder="Tell us about yourself..."
-              rows={3}
-              data-testid="input-bio"
             />
           </div>
 
@@ -632,59 +610,13 @@ export default function Profile() {
 
           <div>
             <Label htmlFor="born-in">Born In</Label>
-            <Popover open={bornInOpen} onOpenChange={setBornInOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={bornInOpen}
-                  className="w-full justify-between"
-                  data-testid="button-born-in"
-                >
-                  {formData.bornIn || "Select city or country..."}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-full p-0">
-                <Command>
-                  <CommandInput
-                    placeholder="Type at least 2 letters..."
-                    value={bornInSearch}
-                    onValueChange={setBornInSearch}
-                    data-testid="input-born-in-search"
-                  />
-                  <CommandList>
-                    <CommandEmpty>No location found.</CommandEmpty>
-                    {bornInSearch.length >= 2 && (
-                      <CommandGroup>
-                        {COUNTRIES.filter(country =>
-                          country.toLowerCase().includes(bornInSearch.toLowerCase())
-                        ).map((country) => (
-                          <CommandItem
-                            key={country}
-                            value={country}
-                            onSelect={() => {
-                              setFormData({ ...formData, bornIn: country });
-                              setBornInOpen(false);
-                              setBornInSearch("");
-                            }}
-                            data-testid={`option-born-in-${country.toLowerCase().replace(/\s+/g, "-")}`}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                formData.bornIn === country ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                            {country}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    )}
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+            <Input
+              id="born-in"
+              value={formData.bornIn || ""}
+              onChange={(e) => setFormData({ ...formData, bornIn: e.target.value })}
+              placeholder="e.g., Paris, France or Tokyo or Brazil"
+              data-testid="input-born-in"
+            />
           </div>
 
           <div>
@@ -695,68 +627,12 @@ export default function Profile() {
                   <Info className="h-4 w-4 text-muted-foreground" />
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Helps others understand your background and connection to different places</p>
+                  <p>Add cities or countries you've lived in. Be as specific as you like!</p>
                 </TooltipContent>
               </Tooltip>
             </div>
-            <Popover open={previousLocationsOpen} onOpenChange={setPreviousLocationsOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={previousLocationsOpen}
-                  className="w-full justify-between"
-                  data-testid="button-previous-locations"
-                >
-                  {(formData.previousLocations || []).length > 0
-                    ? `${formData.previousLocations!.length} selected`
-                    : "Select locations..."}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-full p-0">
-                <Command>
-                  <CommandInput
-                    placeholder="Type at least 2 letters..."
-                    value={previousLocationsSearch}
-                    onValueChange={setPreviousLocationsSearch}
-                    data-testid="input-previous-locations-search"
-                  />
-                  <CommandList>
-                    <CommandEmpty>No location found.</CommandEmpty>
-                    {previousLocationsSearch.length >= 2 && (
-                      <CommandGroup>
-                        {COUNTRIES.filter(country =>
-                          country.toLowerCase().includes(previousLocationsSearch.toLowerCase())
-                        ).map((country) => {
-                          const isSelected = (formData.previousLocations || []).includes(country);
-                          return (
-                            <CommandItem
-                              key={country}
-                              value={country}
-                              onSelect={() => {
-                                toggleArrayItem("previousLocations", country);
-                              }}
-                              data-testid={`option-previous-location-${country.toLowerCase().replace(/\s+/g, "-")}`}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  isSelected ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                              {country}
-                            </CommandItem>
-                          );
-                        })}
-                      </CommandGroup>
-                    )}
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
             {(formData.previousLocations || []).length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
+              <div className="flex flex-wrap gap-2 mb-2">
                 {formData.previousLocations!.map((location) => (
                   <Badge
                     key={location}
@@ -771,6 +647,33 @@ export default function Profile() {
                 ))}
               </div>
             )}
+            <div className="flex gap-2">
+              <Input
+                placeholder="e.g., Barcelona, Spain or Sydney or London, UK"
+                value={newPreviousLocation}
+                onChange={(e) => setNewPreviousLocation(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === "Enter" && newPreviousLocation.trim()) {
+                    toggleArrayItem("previousLocations", newPreviousLocation.trim());
+                    setNewPreviousLocation("");
+                  }
+                }}
+                data-testid="input-previous-location"
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  if (newPreviousLocation.trim()) {
+                    toggleArrayItem("previousLocations", newPreviousLocation.trim());
+                    setNewPreviousLocation("");
+                  }
+                }}
+                data-testid="button-add-location"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           <div>
@@ -866,6 +769,49 @@ export default function Profile() {
                 </Badge>
               ))}
             </div>
+            {(formData.interests || []).filter((interest) => !INTEREST_OPTIONS.includes(interest)).length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {(formData.interests || []).filter((interest) => !INTEREST_OPTIONS.includes(interest)).map((custom) => (
+                  <Badge
+                    key={custom}
+                    variant="default"
+                    className="cursor-pointer hover-elevate active-elevate-2"
+                    onClick={() => toggleArrayItem("interests", custom)}
+                    data-testid={`badge-custom-interest-${custom.toLowerCase().replace(/\s+/g, "-")}`}
+                  >
+                    {custom}
+                    <X className="ml-1 h-3 w-3" />
+                  </Badge>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-2 mt-2">
+              <Input
+                placeholder="Other (write your own)..."
+                value={newCustomInterest}
+                onChange={(e) => setNewCustomInterest(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === "Enter" && newCustomInterest.trim() && !(formData.interests || []).includes(newCustomInterest.trim())) {
+                    toggleArrayItem("interests", newCustomInterest.trim());
+                    setNewCustomInterest("");
+                  }
+                }}
+                data-testid="input-custom-interest"
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  if (newCustomInterest.trim() && !(formData.interests || []).includes(newCustomInterest.trim())) {
+                    toggleArrayItem("interests", newCustomInterest.trim());
+                    setNewCustomInterest("");
+                  }
+                }}
+                data-testid="button-add-interest"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           <div>
@@ -907,60 +853,6 @@ export default function Profile() {
                 ))}
               </SelectContent>
             </Select>
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <Label>Availability Dates</Label>
-              <div className="flex items-center gap-2">
-                <Label htmlFor="availability-flexible" className="text-sm font-normal">
-                  Flexible / Up to agreement
-                </Label>
-                <Switch
-                  id="availability-flexible"
-                  checked={formData.availabilityFlexible || false}
-                  onCheckedChange={(checked) => setFormData({ ...formData, availabilityFlexible: checked })}
-                  data-testid="switch-availability-flexible"
-                />
-              </div>
-            </div>
-            
-            {!formData.availabilityFlexible && (
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <Label htmlFor="from" className="text-xs">From</Label>
-                  <Input
-                    id="from"
-                    type="date"
-                    value={formData.availabilityFrom || ""}
-                    onChange={(e) => setFormData({ ...formData, availabilityFrom: e.target.value })}
-                    data-testid="input-availability-from"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="to" className="text-xs">To</Label>
-                  <Input
-                    id="to"
-                    type="date"
-                    value={formData.availabilityTo || ""}
-                    onChange={(e) => setFormData({ ...formData, availabilityTo: e.target.value })}
-                    data-testid="input-availability-to"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="days" className="text-xs">Days (1-30)</Label>
-                  <Input
-                    id="days"
-                    type="number"
-                    min="1"
-                    max="30"
-                    value={formData.availabilityDays || ""}
-                    onChange={(e) => setFormData({ ...formData, availabilityDays: parseInt(e.target.value) })}
-                    data-testid="input-availability-days"
-                  />
-                </div>
-              </div>
-            )}
           </div>
 
           <div>

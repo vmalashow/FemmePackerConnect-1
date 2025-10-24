@@ -10,7 +10,7 @@
 ### Light Mode
 - **Primary Purple**: 270 65% 55% (empowerment, community)
 - **Deep Purple**: 270 60% 35% (trust, headers)
-- **Warm Coral**: 15 85% 65% (warmth, CTAs)
+- **Bright Orange**: 26 92% 57% (#F7822B - warmth, CTAs, accents)
 - **Soft Peach**: 25 75% 92% (backgrounds, cards)
 - **Neutral Gray**: 220 10% 96% (sections)
 - **Text**: 220 20% 20% (primary), 220 15% 45% (secondary)
@@ -18,7 +18,7 @@
 ### Dark Mode
 - **Primary Purple**: 270 60% 65%
 - **Deep Purple**: 270 55% 45%
-- **Warm Coral**: 15 80% 70%
+- **Bright Orange**: 26 92% 60% (#F7822B - warmth, CTAs, accents)
 - **Dark Background**: 220 20% 10%
 - **Card Background**: 220 18% 14%
 - **Text**: 220 10% 92% (primary), 220 8% 70% (secondary)
