@@ -32,7 +32,16 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Info, Plus, X, Check, ChevronsUpDown } from "lucide-react";
@@ -116,8 +125,10 @@ const ACTIVITY_OPTIONS = [
 
 export default function Profile() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<Partial<Profile>>({});
+  const [showTravelDialog, setShowTravelDialog] = useState(false);
   const [newCustomTransport, setNewCustomTransport] = useState("");
   const [newCustomStay, setNewCustomStay] = useState("");
   const [newCustomActivity, setNewCustomActivity] = useState("");
@@ -144,6 +155,7 @@ export default function Profile() {
       queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
       setIsEditing(false);
       toast({ title: "Profile created successfully!" });
+      setShowTravelDialog(true);
     },
   });
 
@@ -1116,6 +1128,38 @@ export default function Profile() {
           </div>
         </Card>
       </div>
+
+      <Dialog open={showTravelDialog} onOpenChange={setShowTravelDialog}>
+        <DialogContent data-testid="dialog-travel-intent">
+          <DialogHeader>
+            <DialogTitle>Welcome to FemmePacker!</DialogTitle>
+            <DialogDescription>
+              Your profile is all set up. Are you planning to travel soon?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowTravelDialog(false);
+                setLocation("/explore");
+              }}
+              data-testid="button-no-travel"
+            >
+              Not yet - just exploring
+            </Button>
+            <Button
+              onClick={() => {
+                setShowTravelDialog(false);
+                toast({ title: "Great! Let's plan your trip", description: "Hosting request feature coming soon!" });
+              }}
+              data-testid="button-yes-travel"
+            >
+              Yes, planning a trip!
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
