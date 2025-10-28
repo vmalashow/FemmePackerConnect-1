@@ -225,3 +225,29 @@ Preferred communication style: Simple, everyday language.
 - Green Flags: Positive traits and preferences
 - Red Flags: Boundaries and dislikes
 - Helps set expectations and find compatible connections
+
+### AI Assistant
+
+**Interactive Quick Actions**
+- Three primary quick actions: Find Destinations, Match with Hosts, Plan Itinerary
+- Each action triggers an interactive questionnaire flow with 4-5 personalized questions
+- Questions tailored to action type (travel preferences, hosting needs, itinerary planning)
+- Progress indicator shows current question number during questionnaire
+
+**Personalization System**
+- Collects user preferences through conversational questions
+- Generates personalized recommendations based on collected answers
+- Connects recommendations to mock community members with shared interests
+- References existing app users and community content in responses
+
+**Questionnaire Types**
+- **Find Destinations**: Asks about travel vibe, budget, must-haves, timeline, duration
+- **Match with Hosts**: Asks about activities, hosting experience, communication style, deal-breakers, languages
+- **Plan Itinerary**: Asks about trip duration, interests, pace, budget, specific experiences
+
+**Response Generation**
+- Creates detailed, personalized recommendations with emojis for visual appeal
+- Mentions specific community members (e.g., "Sarah in Tokyo recommends...")
+- Includes budget estimates, pro tips, and calls-to-action
+- Uses profile data when available to enhance personalization
+- Formats responses with markdown-style emphasis and structure

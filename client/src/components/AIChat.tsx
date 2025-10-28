@@ -93,7 +93,7 @@ export function AIChat({ selectedAction, onActionComplete }: AIChatProps) {
       const initialMessage: Message = {
         id: Date.now().toString(),
         role: 'assistant',
-        content: `Great! Let's find the perfect ${selectedAction.toLowerCase()} for you. I'll ask you a few quick questions to personalize your experience. ${questions[0].text}`
+        content: `Great! Let's find the perfect ${selectedAction.toLowerCase()} for you. I'll ask you a few quick questions to personalize your experience.\n\n${questions[0].text}`
       };
       
       setMessages(prev => [...prev, initialMessage]);
