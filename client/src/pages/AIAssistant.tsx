@@ -1,15 +1,24 @@
+import { useState } from "react";
 import { MobileHeader } from "@/components/MobileHeader";
 import { AIChat } from "@/components/AIChat";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, MapPin, Users, Compass } from "lucide-react";
 
+export type QuickActionType = "Find Destinations" | "Match with Hosts" | "Plan Itinerary";
+
 export default function AIAssistant() {
+  const [selectedAction, setSelectedAction] = useState<QuickActionType | null>(null);
+
   const quickActions = [
-    { icon: MapPin, label: "Find Destinations", color: "text-primary" },
-    { icon: Users, label: "Match with Hosts", color: "text-chart-2" },
-    { icon: Compass, label: "Plan Itinerary", color: "text-chart-3" },
+    { icon: MapPin, label: "Find Destinations" as QuickActionType, color: "text-primary" },
+    { icon: Users, label: "Match with Hosts" as QuickActionType, color: "text-chart-2" },
+    { icon: Compass, label: "Plan Itinerary" as QuickActionType, color: "text-chart-3" },
   ];
+
+  const handleQuickAction = (action: QuickActionType) => {
+    setSelectedAction(action);
+  };
 
   return (
     <div className="min-h-screen bg-background pb-16 md:pb-0">
@@ -28,7 +37,7 @@ export default function AIAssistant() {
               </p>
             </div>
 
-            <AIChat />
+            <AIChat selectedAction={selectedAction} onActionComplete={() => setSelectedAction(null)} />
           </div>
 
           <div className="space-y-6">
@@ -38,6 +47,7 @@ export default function AIAssistant() {
                 {quickActions.map((action) => (
                   <button
                     key={action.label}
+                    onClick={() => handleQuickAction(action.label)}
                     className="w-full flex items-center gap-3 p-3 rounded-md hover-elevate active-elevate-2 text-left"
                     data-testid={`button-${action.label.toLowerCase().replace(/\s+/g, '-')}`}
                   >
