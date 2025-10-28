@@ -200,7 +200,7 @@ export default function Explore() {
 
       {/* Article Detail Dialog */}
       <Dialog open={!!selectedArticle} onOpenChange={(open) => !open && setSelectedArticle(null)}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto" aria-describedby="article-description">
           {selectedArticle && (
             <>
               <DialogHeader>
@@ -214,6 +214,7 @@ export default function Explore() {
                   <span>•</span>
                   <span>{new Date(selectedArticle.publishedDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
                 </div>
+                <p id="article-description" className="sr-only">{selectedArticle.description}</p>
               </DialogHeader>
               <div className="mt-6">
                 {renderArticleContent(selectedArticle)}

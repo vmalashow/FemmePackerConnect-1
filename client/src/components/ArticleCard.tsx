@@ -1,3 +1,4 @@
+import type { KeyboardEvent } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, User } from "lucide-react";
@@ -9,10 +10,21 @@ interface ArticleCardProps {
 }
 
 export function ArticleCard({ article, onClick }: ArticleCardProps) {
+  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onClick?.();
+    }
+  };
+
   return (
     <Card 
       className="overflow-hidden hover-elevate cursor-pointer"
       onClick={onClick}
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+      role="button"
+      aria-label={`Read article: ${article.title}`}
       data-testid={`card-article-${article.slug}`}
     >
       <div className="aspect-video bg-gradient-to-br from-primary/10 via-accent/10 to-primary/5 flex items-center justify-center border-b">
