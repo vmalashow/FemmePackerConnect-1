@@ -230,9 +230,10 @@ Preferred communication style: Simple, everyday language.
 
 **Interactive Quick Actions**
 - Three primary quick actions: Find Destinations, Match with Hosts, Plan Itinerary
-- Each action triggers an interactive questionnaire flow with 4-5 personalized questions
+- Each action triggers an interactive questionnaire flow with 5 personalized questions
 - Questions tailored to action type (travel preferences, hosting needs, itinerary planning)
-- Progress indicator shows current question number during questionnaire
+- Progress indicator badge appears in chat header showing "Question X/5" during active questionnaire
+- Badge automatically disappears when questionnaire completes, keeping chat history clean
 
 **Personalization System**
 - Collects user preferences through conversational questions
