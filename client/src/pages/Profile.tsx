@@ -135,6 +135,7 @@ export default function Profile() {
   const [newCustomPreferredDays, setNewCustomPreferredDays] = useState("");
   const [newCustomInterest, setNewCustomInterest] = useState("");
   const [newPreviousLocation, setNewPreviousLocation] = useState("");
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   
   const [countryOpen, setCountryOpen] = useState(false);
   const [countrySearch, setCountrySearch] = useState("");
@@ -192,7 +193,51 @@ export default function Profile() {
     }
   }, [profile]);
 
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    // Required fields
+    if (!formData.name?.trim()) {
+      errors.name = "Name is required";
+    }
+
+    if (!formData.country) {
+      errors.country = "Current country is required";
+    }
+
+    if (!formData.languages || formData.languages.length === 0) {
+      errors.languages = "Please select at least one language";
+    }
+
+    if (!formData.interests || formData.interests.length === 0) {
+      errors.interests = "Please select at least one interest";
+    }
+
+    if (!formData.aboutMe?.trim()) {
+      errors.aboutMe = "Tell us a little about yourself";
+    }
+
+    setValidationErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
+      toast({
+        title: "Please complete all required fields",
+        description: "Name, About Me, Country, Languages, and Interests are required to create your profile.",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSave = () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    setValidationErrors({});
+    
     if (profile) {
       updateMutation.mutate(formData);
     } else {
@@ -464,18 +509,31 @@ export default function Profile() {
       <div className="container mx-auto px-4 py-6 max-w-2xl">
         <Card className="p-6 space-y-6">
           <div>
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name" className={validationErrors.name ? "text-destructive" : ""}>
+              Name <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="name"
               value={formData.name || ""}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, name: e.target.value });
+                if (validationErrors.name) {
+                  setValidationErrors({ ...validationErrors, name: "" });
+                }
+              }}
+              className={validationErrors.name ? "border-destructive" : ""}
               data-testid="input-name"
             />
+            {validationErrors.name && (
+              <p className="text-sm text-destructive mt-1" data-testid="error-name">{validationErrors.name}</p>
+            )}
           </div>
 
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <Label htmlFor="about-me">About Me</Label>
+              <Label htmlFor="about-me" className={validationErrors.aboutMe ? "text-destructive" : ""}>
+                About Me <span className="text-destructive">*</span>
+              </Label>
               <Tooltip>
                 <TooltipTrigger>
                   <Info className="h-4 w-4 text-muted-foreground" />
@@ -488,11 +546,20 @@ export default function Profile() {
             <Textarea
               id="about-me"
               value={formData.aboutMe || ""}
-              onChange={(e) => setFormData({ ...formData, aboutMe: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, aboutMe: e.target.value });
+                if (validationErrors.aboutMe) {
+                  setValidationErrors({ ...validationErrors, aboutMe: "" });
+                }
+              }}
               placeholder="Example: I'm a curious soul who believes the best travel stories happen when you get lost. I love connecting with locals over food, practicing my terrible language skills, and finding hidden gems off the tourist trail."
               rows={4}
+              className={validationErrors.aboutMe ? "border-destructive" : ""}
               data-testid="input-about-me"
             />
+            {validationErrors.aboutMe && (
+              <p className="text-sm text-destructive mt-1" data-testid="error-about-me">{validationErrors.aboutMe}</p>
+            )}
           </div>
 
           <div className="flex items-center justify-between">
@@ -602,14 +669,16 @@ export default function Profile() {
           )}
 
           <div>
-            <Label htmlFor="country">Current Country</Label>
+            <Label htmlFor="country" className={validationErrors.country ? "text-destructive" : ""}>
+              Current Country <span className="text-destructive">*</span>
+            </Label>
             <Popover open={countryOpen} onOpenChange={setCountryOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   role="combobox"
                   aria-expanded={countryOpen}
-                  className="w-full justify-between"
+                  className={cn("w-full justify-between", validationErrors.country && "border-destructive")}
                   data-testid="button-country"
                 >
                   {formData.country || "Select country..."}
@@ -638,6 +707,9 @@ export default function Profile() {
                               setFormData({ ...formData, country });
                               setCountryOpen(false);
                               setCountrySearch("");
+                              if (validationErrors.country) {
+                                setValidationErrors({ ...validationErrors, country: "" });
+                              }
                             }}
                             data-testid={`option-country-${country.toLowerCase().replace(/\s+/g, "-")}`}
                           >
@@ -656,17 +728,33 @@ export default function Profile() {
                 </Command>
               </PopoverContent>
             </Popover>
+            {validationErrors.country && (
+              <p className="text-sm text-destructive mt-1" data-testid="error-country">{validationErrors.country}</p>
+            )}
           </div>
 
           <div>
-            <Label htmlFor="born-in">Born In</Label>
+            <div className="flex items-center gap-2 mb-2">
+              <Label htmlFor="born-in">Born In</Label>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Info className="h-4 w-4 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Enter your birth city and/or country - be as specific or general as you like!</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
             <Input
               id="born-in"
               value={formData.bornIn || ""}
               onChange={(e) => setFormData({ ...formData, bornIn: e.target.value })}
-              placeholder="e.g., Paris, France or Tokyo or Brazil"
+              placeholder="Type your city and/or country (e.g., Paris, France or Tokyo or Brazil)"
               data-testid="input-born-in"
             />
+            <p className="text-xs text-muted-foreground mt-1">
+              You can be as specific as you want - city-level, country-level, or both!
+            </p>
           </div>
 
           <div>
@@ -727,14 +815,16 @@ export default function Profile() {
           </div>
 
           <div>
-            <Label>Languages</Label>
+            <Label className={validationErrors.languages ? "text-destructive" : ""}>
+              Languages <span className="text-destructive">*</span>
+            </Label>
             <Popover open={languageOpen} onOpenChange={setLanguageOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   role="combobox"
                   aria-expanded={languageOpen}
-                  className="w-full justify-between"
+                  className={cn("w-full justify-between", validationErrors.languages && "border-destructive")}
                   data-testid="button-languages"
                 >
                   {(formData.languages || []).length > 0
@@ -765,6 +855,9 @@ export default function Profile() {
                               value={lang.name}
                               onSelect={() => {
                                 toggleArrayItem("languages", lang.name);
+                                if (validationErrors.languages && (formData.languages || []).length >= 0) {
+                                  setValidationErrors({ ...validationErrors, languages: "" });
+                                }
                               }}
                               data-testid={`option-language-${lang.name.toLowerCase()}`}
                             >
@@ -802,17 +895,27 @@ export default function Profile() {
                 ))}
               </div>
             )}
+            {validationErrors.languages && (
+              <p className="text-sm text-destructive mt-1" data-testid="error-languages">{validationErrors.languages}</p>
+            )}
           </div>
 
           <div>
-            <Label>Interests</Label>
+            <Label className={validationErrors.interests ? "text-destructive" : ""}>
+              Interests <span className="text-destructive">*</span>
+            </Label>
             <div className="flex flex-wrap gap-2 mt-2">
               {INTEREST_OPTIONS.map((interest) => (
                 <Badge
                   key={interest}
                   variant={(formData.interests || []).includes(interest) ? "default" : "outline"}
                   className="cursor-pointer hover-elevate active-elevate-2"
-                  onClick={() => toggleArrayItem("interests", interest)}
+                  onClick={() => {
+                    toggleArrayItem("interests", interest);
+                    if (validationErrors.interests && (formData.interests || []).length >= 0) {
+                      setValidationErrors({ ...validationErrors, interests: "" });
+                    }
+                  }}
                   data-testid={`badge-interest-${interest.toLowerCase().replace(/\s+/g, "-")}`}
                 >
                   {interest}
@@ -862,6 +965,9 @@ export default function Profile() {
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
+            {validationErrors.interests && (
+              <p className="text-sm text-destructive mt-1" data-testid="error-interests">{validationErrors.interests}</p>
+            )}
           </div>
 
           <div>
