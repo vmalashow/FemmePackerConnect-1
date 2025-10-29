@@ -1,18 +1,27 @@
 import { useState, useEffect, useRef } from "react";
+import type { LucideIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Send, Sparkles } from "lucide-react";
+import { Send, Sparkles, ArrowRight, Map, Users, MapPin } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { QuickActionType } from "@/pages/AIAssistant";
 import { useQuery } from "@tanstack/react-query";
 import type { Profile } from "@shared/schema";
+import { Link } from "wouter";
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  followUpActions?: FollowUpAction[];
+}
+
+interface FollowUpAction {
+  label: string;
+  action: QuickActionType;
+  icon?: LucideIcon;
 }
 
 interface Question {
@@ -56,6 +65,50 @@ const QUESTIONNAIRES: Record<QuickActionType, Question[]> = {
   ],
 };
 
+// Helper function to render text with clickable references
+function renderContentWithLinks(content: string): React.ReactNode {
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  
+  // Pattern to match member names and destination phrases (with optional markdown and city qualifiers)
+  const linkPattern = /\*\*(Sarah Chen|Emma Rodriguez|Maya Patel|Olivia Kim|Sofia Andersson|Nepal \(Kathmandu\)|Greece \(Athens\)|Portugal \(Lagos\)|Thailand \(Bangkok\)|Spain \(Barcelona\)|France \(Paris\))\*\*|(Sarah Chen|Emma Rodriguez|Maya Patel|Olivia Kim|Sofia Andersson)/g;
+  
+  let match;
+  while ((match = linkPattern.exec(content)) !== null) {
+    // Add text before the match
+    if (match.index > lastIndex) {
+      parts.push(content.substring(lastIndex, match.index));
+    }
+    
+    // Extract the actual name/destination (group 1 has markdown matches, group 2 has plain member names)
+    const matchedText = match[1] || match[2];
+    const isMember = ['Sarah Chen', 'Emma Rodriguez', 'Maya Patel', 'Olivia Kim', 'Sofia Andersson'].includes(matchedText.replace(/\s*\(.*?\)/, ''));
+    const testIdPrefix = isMember ? 'member' : 'destination';
+    const testIdSlug = matchedText.toLowerCase().replace(/\s+/g, '-').replace(/[()]/g, '');
+    
+    // Add the clickable link
+    parts.push(
+      <Link 
+        key={`${testIdPrefix}-${match.index}`}
+        href="/explore"
+        className="text-primary hover:underline font-bold cursor-pointer"
+        data-testid={`link-${testIdPrefix}-${testIdSlug}`}
+      >
+        {matchedText}
+      </Link>
+    );
+    
+    lastIndex = match.index + match[0].length;
+  }
+  
+  // Add remaining text
+  if (lastIndex < content.length) {
+    parts.push(content.substring(lastIndex));
+  }
+  
+  return parts.length > 0 ? parts : content;
+}
+
 export function AIChat({ selectedAction, onActionComplete }: AIChatProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -67,6 +120,7 @@ export function AIChat({ selectedAction, onActionComplete }: AIChatProps) {
   const [input, setInput] = useState('');
   const [questionnaire, setQuestionnaire] = useState<QuestionnaireData | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const { data: profile } = useQuery<Profile>({
     queryKey: ['/api/profile'],
@@ -101,12 +155,21 @@ export function AIChat({ selectedAction, onActionComplete }: AIChatProps) {
   }, [selectedAction, questionnaire]);
 
   useEffect(() => {
+    // Scroll to bottom whenever messages change
     if (scrollRef.current) {
-      scrollRef.current.scrollIntoView({ behavior: 'smooth' });
+      scrollRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
   }, [messages]);
 
-  const generatePersonalizedResponse = (action: QuickActionType, answers: string[]) => {
+  const generatePersonalizedResponse = (action: QuickActionType, answers: string[]): { content: string; followUpActions: FollowUpAction[] } => {
+    interface MatchedHost {
+      name: string;
+      location: string;
+      interests: string[];
+      matchReasons: string[];
+      matchScore: number;
+    }
+
     const mockUsers = [
       { name: "Sarah Chen", location: "Tokyo, Japan", interests: ["hiking", "photography", "cooking"] },
       { name: "Emma Rodriguez", location: "Barcelona, Spain", interests: ["art", "music", "food"] },
@@ -118,35 +181,48 @@ export function AIChat({ selectedAction, onActionComplete }: AIChatProps) {
     if (action === "Find Destinations") {
       const [vibe, budget, mustHave, when, duration] = answers;
       const matchedDestinations = [];
+      let primaryDestination = "Barcelona";
       
       if (vibe.toLowerCase().includes("adventure") || mustHave.toLowerCase().includes("mountain")) {
-        matchedDestinations.push("🏔️ **Nepal (Kathmandu)** - Perfect for adventure seekers! Maya in Bali just returned from there and loved the trekking.");
+        matchedDestinations.push("**Nepal (Kathmandu)** - Perfect for adventure seekers! Maya Patel in Bali just returned from there and loved the trekking.");
+        primaryDestination = "Nepal";
       }
       if (vibe.toLowerCase().includes("culture") || mustHave.toLowerCase().includes("histor")) {
-        matchedDestinations.push("🏛️ **Greece (Athens)** - Rich in history and culture. Olivia from Paris recommends the Acropolis Museum.");
+        matchedDestinations.push("**Greece (Athens)** - Rich in history and culture. Olivia Kim from Paris recommends the Acropolis Museum.");
+        primaryDestination = "Greece";
       }
       if (mustHave.toLowerCase().includes("beach") || vibe.toLowerCase().includes("relax")) {
-        matchedDestinations.push("🏖️ **Portugal (Lagos)** - Beautiful beaches and relaxed vibe. Sarah in Tokyo says it's her favorite beach destination.");
+        matchedDestinations.push("**Portugal (Lagos)** - Beautiful beaches and relaxed vibe. Sarah Chen in Tokyo says it's her favorite beach destination.");
+        primaryDestination = "Portugal";
       }
       if (vibe.toLowerCase().includes("food") || mustHave.toLowerCase().includes("food")) {
-        matchedDestinations.push("🍜 **Thailand (Bangkok)** - Street food paradise! Emma in Barcelona connects you with local food tours.");
+        matchedDestinations.push("**Thailand (Bangkok)** - Street food paradise! Emma Rodriguez in Barcelona can connect you with local food tours.");
+        primaryDestination = "Thailand";
       }
 
       if (matchedDestinations.length === 0) {
-        matchedDestinations.push("🌟 **Spain (Barcelona)** - Great mix of everything! Emma lives there and loves hosting travelers.");
-        matchedDestinations.push("🗼 **France (Paris)** - Classic destination with endless activities. Olivia is based there and offers city tips.");
+        matchedDestinations.push("**Spain (Barcelona)** - Great mix of everything! Emma Rodriguez lives there and loves hosting travelers.");
+        matchedDestinations.push("**France (Paris)** - Classic destination with endless activities. Olivia Kim is based there and offers city tips.");
+        primaryDestination = "France";
       }
 
-      return `Based on your preferences (${vibe} vibe, ${budget} budget, ${duration} duration), here are my top recommendations:\n\n${matchedDestinations.join('\n\n')}\n\n💡 **Pro tip**: ${mockUsers[Math.floor(Math.random() * mockUsers.length)].name} recently traveled on a similar budget and shared great money-saving tips in the community feed!\n\n✨ Want to connect with hosts in any of these locations? Just ask!`;
+      const content = `Based on your preferences (${vibe} vibe, ${budget} budget, ${duration} duration), here are my top recommendations:\n\n${matchedDestinations.join('\n\n')}\n\n**Pro tip**: ${mockUsers[Math.floor(Math.random() * mockUsers.length)].name} recently traveled on a similar budget and shared great money-saving tips in the community feed!\n\nWant to connect with hosts in any of these locations? Just ask!`;
+      
+      const followUpActions: FollowUpAction[] = [
+        { label: `Plan itinerary for ${primaryDestination}`, action: "Plan Itinerary", icon: Map },
+        { label: "Find hosts in this area", action: "Match with Hosts", icon: Users }
+      ];
+
+      return { content, followUpActions };
     }
 
     if (action === "Match with Hosts") {
       const [activities, experience, communication, dealBreakers, languages] = answers;
-      const matchedHosts = [];
+      const matchedHosts: MatchedHost[] = [];
 
       mockUsers.forEach(user => {
         let matchScore = 0;
-        let matchReasons = [];
+        const matchReasons: string[] = [];
 
         user.interests.forEach(interest => {
           if (activities.toLowerCase().includes(interest)) {
@@ -170,7 +246,16 @@ export function AIChat({ selectedAction, onActionComplete }: AIChatProps) {
         `${i + 1}. **${host.name}** in ${host.location}\n   • ${host.matchReasons.join(', ')}\n   • Speaks ${languages.split(',')[0] || 'English'}\n   • Hosting style: ${experience}`
       ).join('\n\n');
 
-      return `I found ${matchedHosts.length} hosts that match your preferences! Here are your top 3 matches:\n\n${hostList}\n\n💬 All these hosts have 5-star ratings and love ${activities.split(',')[0]}! ${matchedHosts[0].name} posted in the community feed yesterday about hosting tips.\n\n🔗 Ready to send a connection request?`;
+      const content = `I found ${matchedHosts.length} hosts that match your preferences! Here are your top 3 matches:\n\n${hostList}\n\nAll these hosts have 5-star ratings and love ${activities.split(',')[0]}! ${matchedHosts[0].name} posted in the community feed yesterday about hosting tips.\n\nReady to send a connection request?`;
+      
+      const topHost = matchedHosts[0];
+      const topLocation = topHost.location.split(',')[0];
+      const followUpActions: FollowUpAction[] = [
+        { label: `Plan trip to ${topLocation}`, action: "Plan Itinerary", icon: Map },
+        { label: "Explore more destinations", action: "Find Destinations", icon: MapPin }
+      ];
+
+      return { content, followUpActions };
     }
 
     if (action === "Plan Itinerary") {
@@ -181,27 +266,34 @@ export function AIChat({ selectedAction, onActionComplete }: AIChatProps) {
       const interestList = interests.toLowerCase().split(',').map(i => i.trim());
       
       if (interestList.some(i => i.includes('food') || i.includes('cooking'))) {
-        itinerary.push("🍳 **Day 1-2**: Local food tour & cooking class with Emma in Barcelona");
+        itinerary.push("**Day 1-2**: Local food tour & cooking class with Emma Rodriguez in Barcelona");
       } else {
-        itinerary.push("🎨 **Day 1-2**: Cultural exploration & museum visits");
+        itinerary.push("**Day 1-2**: Cultural exploration & museum visits");
       }
 
       if (interestList.some(i => i.includes('hik') || i.includes('nature'))) {
-        itinerary.push("🥾 **Day 3-4**: Hiking excursion with local guide (Sofia recommends the coastal trails!)");
+        itinerary.push("**Day 3-4**: Hiking excursion with local guide (Sofia Andersson recommends the coastal trails!)");
       } else {
-        itinerary.push("🏛️ **Day 3-4**: Historical sites & architecture tour");
+        itinerary.push("**Day 3-4**: Historical sites & architecture tour");
       }
 
       if (pace.toLowerCase().includes('relax')) {
-        itinerary.push(`☕ **Day 5-${days}**: Flexible days - beach time, cafes, and spontaneous adventures`);
+        itinerary.push(`**Day ${days > 4 ? '5' : '3'}-${days}**: Flexible days - beach time, cafes, and spontaneous adventures`);
       } else {
-        itinerary.push(`⚡ **Day 5-${days}**: Action-packed activities: ${experiences || 'local experiences, shopping, nightlife'}`);
+        itinerary.push(`**Day ${days > 4 ? '5' : '3'}-${days}**: Action-packed activities: ${experiences || 'local experiences, shopping, nightlife'}`);
       }
 
-      return `Here's a personalized ${days}-day itinerary based on your ${pace} pace and ${budget} budget:\n\n${itinerary.join('\n\n')}\n\n💰 **Budget estimate**: $${(parseInt(budget.match(/\d+/)?.[0] || '100')) * days}/total\n\n👥 **Local insight**: Maya just completed a similar trip and shared her detailed itinerary in the community! She also knows a great ${interestList[0]} spot that's off the beaten path.\n\n🗺️ Want me to add specific restaurants, accommodations, or activities?`;
+      const content = `Here's a personalized ${days}-day itinerary based on your ${pace} pace and ${budget} budget:\n\n${itinerary.join('\n\n')}\n\n**Budget estimate**: $${(parseInt(budget.match(/\d+/)?.[0] || '100')) * days}/total\n\n**Local insight**: Maya Patel just completed a similar trip and shared her detailed itinerary in the community! She also knows a great ${interestList[0]} spot that's off the beaten path.\n\nWant me to add specific restaurants, accommodations, or activities?`;
+      
+      const followUpActions: FollowUpAction[] = [
+        { label: "Match with local hosts", action: "Match with Hosts", icon: Users },
+        { label: "Find more destinations", action: "Find Destinations", icon: MapPin }
+      ];
+
+      return { content, followUpActions };
     }
 
-    return "Thanks for sharing! Let me find the best matches for you.";
+    return { content: "Thanks for sharing! Let me find the best matches for you.", followUpActions: [] };
   };
 
   const handleQuestionnaireAnswer = () => {
@@ -233,10 +325,12 @@ export function AIChat({ selectedAction, onActionComplete }: AIChatProps) {
           answers: newAnswers
         });
       } else {
+        const { content, followUpActions } = generatePersonalizedResponse(questionnaire.action, newAnswers);
         const finalResponse: Message = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          content: generatePersonalizedResponse(questionnaire.action, newAnswers)
+          content,
+          followUpActions
         };
         setMessages(prev => [...prev, finalResponse]);
         setQuestionnaire(null);
@@ -276,6 +370,29 @@ export function AIChat({ selectedAction, onActionComplete }: AIChatProps) {
     setInput(suggestion);
   };
 
+  const handleFollowUpAction = (action: QuickActionType) => {
+    // Trigger the parent component to start the new action
+    onActionComplete(); // Clear any existing action state
+    setTimeout(() => {
+      const questions = QUESTIONNAIRES[action];
+      
+      setQuestionnaire({
+        action,
+        questions,
+        currentIndex: 0,
+        answers: []
+      });
+
+      const initialMessage: Message = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: `Great! Let's ${action.toLowerCase()} for you. I'll ask you a few quick questions to personalize your experience.\n\n${questions[0].text}`
+      };
+      
+      setMessages(prev => [...prev, initialMessage]);
+    }, 100);
+  };
+
   const currentPlaceholder = questionnaire 
     ? questionnaire.questions[questionnaire.currentIndex].placeholder || "Type your answer..."
     : "Ask me anything about travel...";
@@ -292,23 +409,49 @@ export function AIChat({ selectedAction, onActionComplete }: AIChatProps) {
         )}
       </div>
 
-      <ScrollArea className="flex-1 p-4">
+      <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
         <div className="space-y-4">
           {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              data-testid={`message-${message.role}`}
-            >
+            <div key={message.id}>
               <div
-                className={`max-w-[80%] rounded-lg p-3 whitespace-pre-line ${
-                  message.role === 'user'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-foreground'
-                }`}
+                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                data-testid={`message-${message.role}`}
               >
-                {message.content}
+                <div
+                  className={`max-w-[80%] rounded-lg p-3 whitespace-pre-line ${
+                    message.role === 'user'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-foreground'
+                  }`}
+                >
+                  {message.role === 'assistant' ? renderContentWithLinks(message.content) : message.content}
+                </div>
               </div>
+              
+              {/* Follow-up action buttons */}
+              {message.followUpActions && message.followUpActions.length > 0 && (
+                <div className="flex justify-start mt-2">
+                  <div className="max-w-[80%] flex flex-wrap gap-2">
+                    {message.followUpActions.map((action, idx) => {
+                      const IconComponent = action.icon;
+                      return (
+                        <Button
+                          key={idx}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleFollowUpAction(action.action)}
+                          className="text-xs"
+                          data-testid={`button-followup-${action.action.toLowerCase().replace(/\s+/g, '-')}`}
+                        >
+                          {IconComponent && <IconComponent className="mr-1 h-3 w-3" />}
+                          {action.label}
+                          <ArrowRight className="ml-1 h-3 w-3" />
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
           <div ref={scrollRef} />
