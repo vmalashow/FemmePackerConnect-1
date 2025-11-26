@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertProfileSchema, insertReviewSchema, insertHostingRequestSchema, insertUserMapSchema } from "@shared/schema";
+import { insertProfileSchema, insertReviewSchema, insertHostingRequestSchema, insertUserMapSchema, type UserSubscription } from "@shared/schema";
 import OpenAI from "openai";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -284,6 +284,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updated);
     } catch (error) {
       res.status(500).json({ error: "Failed to update map" });
+    }
+  });
+
+  // GET /api/subscription - Get user's subscription
+  app.get("/api/subscription", async (req, res) => {
+    try {
+      let sub = await storage.getUserSubscription(MOCK_USER_ID);
+      if (!sub) {
+        sub = await storage.createUserSubscription(MOCK_USER_ID, "free");
+      }
+      res.json(sub);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch subscription" });
+    }
+  });
+
+  // POST /api/subscription/upgrade - Upgrade to premium
+  app.post("/api/subscription/upgrade", async (req, res) => {
+    try {
+      const { stripeSubscriptionId } = req.body;
+      const updated = await storage.updateUserSubscription(MOCK_USER_ID, "premium", stripeSubscriptionId);
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to upgrade subscription" });
+    }
+  });
+
+  // GET /api/quota - Check message quota and limits
+  app.get("/api/quota", async (req, res) => {
+    try {
+      const sub = await storage.getUserSubscription(MOCK_USER_ID);
+      const quota = await storage.getMessageQuota(MOCK_USER_ID);
+      const tier = sub?.tier || "free";
+      
+      const aiLimit = tier === "premium" ? -1 : 5;
+      const hostLimit = tier === "premium" ? -1 : 3;
+      
+      res.json({
+        tier,
+        aiMessages: quota?.aiMessages || 0,
+        aiLimit,
+        hostMessages: quota?.hostMessages || 0,
+        hostLimit,
+        canSendToAI: await storage.canSendMessage(MOCK_USER_ID, 'ai'),
+        canSendToHost: await storage.canSendMessage(MOCK_USER_ID, 'host'),
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch quota" });
+    }
+  });
+
+  // POST /api/messages/send-to-host - Send message to host (with quota check)
+  app.post("/api/messages/send-to-host", async (req, res) => {
+    try {
+      const canSend = await storage.canSendMessage(MOCK_USER_ID, 'host');
+      if (!canSend) {
+        return res.status(403).json({ 
+          error: "Host message limit reached. Upgrade to premium for unlimited messaging.",
+          tier: "free",
+          limit: 3,
+          current: (await storage.getMessageQuota(MOCK_USER_ID))?.hostMessages || 0,
+        });
+      }
+      
+      await storage.incrementMessageCount(MOCK_USER_ID, 'host');
+      res.json({ success: true, message: "Message sent" });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to send message" });
+    }
+  });
+
+  // POST /api/messages/send-to-ai - Send message to AI (with quota check)
+  app.post("/api/messages/send-to-ai", async (req, res) => {
+    try {
+      const canSend = await storage.canSendMessage(MOCK_USER_ID, 'ai');
+      if (!canSend) {
+        return res.status(403).json({ 
+          error: "AI message limit reached. Upgrade to premium for unlimited messaging.",
+          tier: "free",
+          limit: 5,
+          current: (await storage.getMessageQuota(MOCK_USER_ID))?.aiMessages || 0,
+        });
+      }
+      
+      await storage.incrementMessageCount(MOCK_USER_ID, 'ai');
+      res.json({ success: true, message: "Message sent" });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to send message" });
     }
   });
 

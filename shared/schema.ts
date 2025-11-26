@@ -88,6 +88,26 @@ export const userMaps = pgTable("user_maps", {
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 
+export const userSubscriptions = pgTable("user_subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().unique(),
+  tier: text("tier").default("free"), // free, premium
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  nextBillingDate: timestamp("next_billing_date"),
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`),
+});
+
+export const messageQuotas = pgTable("message_quotas", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  month: text("month").notNull(), // YYYY-MM format
+  aiMessages: integer("ai_messages").default(0),
+  hostMessages: integer("host_messages").default(0),
+  createdAt: timestamp("created_at").default(sql`now()`),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -126,3 +146,5 @@ export type ChatMessage = { role: 'user' | 'assistant'; content: string };
 export type ChatHistory = typeof chatHistory.$inferSelect;
 export type UserMap = typeof userMaps.$inferSelect;
 export type InsertUserMap = z.infer<typeof insertUserMapSchema>;
+export type UserSubscription = typeof userSubscriptions.$inferSelect;
+export type MessageQuota = typeof messageQuotas.$inferSelect;

@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Profile, type InsertProfile, type Review, type InsertReview, type HostingRequest, type InsertHostingRequest, type ChatHistory, type ChatMessage, type UserMap, type InsertUserMap } from "@shared/schema";
+import { type User, type InsertUser, type Profile, type InsertProfile, type Review, type InsertReview, type HostingRequest, type InsertHostingRequest, type ChatHistory, type ChatMessage, type UserMap, type InsertUserMap, type UserSubscription, type MessageQuota } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -20,6 +20,12 @@ export interface IStorage {
   getUserMaps(userId: string): Promise<UserMap[]>;
   getPublicMaps(): Promise<UserMap[]>;
   updateUserMap(mapId: string, updates: Partial<InsertUserMap>): Promise<UserMap | undefined>;
+  getUserSubscription(userId: string): Promise<UserSubscription | undefined>;
+  createUserSubscription(userId: string, tier: string): Promise<UserSubscription>;
+  updateUserSubscription(userId: string, tier: string, stripeId?: string): Promise<UserSubscription | undefined>;
+  getMessageQuota(userId: string): Promise<MessageQuota | undefined>;
+  incrementMessageCount(userId: string, type: 'ai' | 'host'): Promise<void>;
+  canSendMessage(userId: string, type: 'ai' | 'host'): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -29,6 +35,8 @@ export class MemStorage implements IStorage {
   private hostingRequests: Map<string, HostingRequest>;
   private chatHistories: Map<string, ChatHistory>;
   private userMaps: Map<string, UserMap>;
+  private userSubscriptions: Map<string, UserSubscription>;
+  private messageQuotas: Map<string, MessageQuota>;
 
   constructor() {
     this.users = new Map();
@@ -37,6 +45,8 @@ export class MemStorage implements IStorage {
     this.hostingRequests = new Map();
     this.chatHistories = new Map();
     this.userMaps = new Map();
+    this.userSubscriptions = new Map();
+    this.messageQuotas = new Map();
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -207,6 +217,94 @@ export class MemStorage implements IStorage {
     const updated: UserMap = { ...existing, ...updates };
     this.userMaps.set(mapId, updated);
     return updated;
+  }
+
+  async getUserSubscription(userId: string): Promise<UserSubscription | undefined> {
+    return this.userSubscriptions.get(userId);
+  }
+
+  async createUserSubscription(userId: string, tier: string): Promise<UserSubscription> {
+    const id = randomUUID();
+    const now = new Date();
+    const sub: UserSubscription = {
+      id,
+      userId,
+      tier,
+      stripeCustomerId: null,
+      stripeSubscriptionId: null,
+      nextBillingDate: null,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.userSubscriptions.set(userId, sub);
+    return sub;
+  }
+
+  async updateUserSubscription(userId: string, tier: string, stripeId?: string): Promise<UserSubscription | undefined> {
+    let sub = this.userSubscriptions.get(userId);
+    if (!sub) {
+      sub = await this.createUserSubscription(userId, tier);
+    }
+    const updated: UserSubscription = {
+      ...sub,
+      tier,
+      stripeSubscriptionId: stripeId || sub.stripeSubscriptionId,
+      updatedAt: new Date(),
+    };
+    this.userSubscriptions.set(userId, updated);
+    return updated;
+  }
+
+  async getMessageQuota(userId: string): Promise<MessageQuota | undefined> {
+    const month = new Date().toISOString().slice(0, 7); // YYYY-MM
+    const key = `${userId}-${month}`;
+    let quota = this.messageQuotas.get(key);
+    if (!quota) {
+      const id = randomUUID();
+      quota = {
+        id,
+        userId,
+        month,
+        aiMessages: 0,
+        hostMessages: 0,
+        createdAt: new Date(),
+      };
+      this.messageQuotas.set(key, quota);
+    }
+    return quota;
+  }
+
+  async incrementMessageCount(userId: string, type: 'ai' | 'host'): Promise<void> {
+    const quota = await this.getMessageQuota(userId);
+    if (!quota) return;
+    
+    const month = new Date().toISOString().slice(0, 7);
+    const key = `${userId}-${month}`;
+    
+    if (type === 'ai') {
+      quota.aiMessages++;
+    } else {
+      quota.hostMessages++;
+    }
+    this.messageQuotas.set(key, quota);
+  }
+
+  async canSendMessage(userId: string, type: 'ai' | 'host'): Promise<boolean> {
+    const sub = await this.getUserSubscription(userId);
+    const quota = await this.getMessageQuota(userId);
+    
+    if (!quota) return false;
+
+    const tier = sub?.tier || 'free';
+    
+    if (tier === 'premium') return true; // Premium users unlimited
+    
+    // Free tier limits
+    if (type === 'ai') {
+      return quota.aiMessages < 5;
+    } else {
+      return quota.hostMessages < 3;
+    }
   }
 }
 
