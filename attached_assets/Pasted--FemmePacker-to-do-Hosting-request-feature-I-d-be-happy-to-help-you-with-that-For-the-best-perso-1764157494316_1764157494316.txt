@@ -1,0 +1,106 @@
+
+FemmePacker to do
+Hosting request feature.
+
+“I'd be happy to help you with that! For the best personalized recommendations, try using one of the Quick Actions on the right. I can ask you a few questions to really tailor my suggestions to your needs!” <- the futures are below, not on the right. the AI assistant is not working. I want you to connect it to any open source AI that could actually be active and engaging; now it keeps on giving me only one answer.
+
+What are your top interests? What languages do you speak? <- are the questions AI Travel assistant asks me; but they must already have this data taken from my profile. Please do not repeat questions on any data you already collect from my profile.
+
+Popular requests (budget tips etc.) are not clickable. can you fix that please?
+
+in travel guides & tips offer the user to add their own story - must be confirmed by femmepacker but they can write their own article as well!
+
+can host travellers - add hosting conditions (same bed, separate bed, separate room, sofa, ground)
+
+
+Currently based in: X, add question: ✅ if can spend time together
+
+Separate the profile creation into several steps, divide them between several screens depending if it’s a host or a traveler (FemmePacker) or both profile
+
+Support
+* 		Help Center
+* 		Trust & Safety
+* 		Contact Us
+About
+* 		Our Mission
+* 		How It Works
+* 		Privacy Policy
+ all empty, how can you help me fill it all up?
+
+also i want to start working on the verification part - i need you to verify people’s profiles by having friends in app confirmation, email confirmation, passport confirmation. Login confirmation via SMS/Email
+
++ section
+
+Purpose: Central hub showing planned trips and invitations.
+UI Elements:
+Header: “My Journeys”
+Cards for upcoming/past trips.
+Floating Action Button (FAB): ➕ Add New Destination
+CTA Copy:
+Add New Destination →
+Empty state text (for first-time users):
+🌍 No trips planned yet? Let’s start your next adventure.
+📍 2. Add Destination Screen
+Purpose: User specifies where she’s going.
+UI Elements:
+Search bar (auto-suggest cities, countries)
+Option for current location (“Use my location”)
+Map preview (optional)
+Button: Next
+Copy Example:
+Where are you heading? Start typing a city or country name.
+Placeholder text:
+“e.g., Lisbon, Portugal”
+CTA:
+Next →
+🗓️ 3. Travel Details Screen
+Purpose: User adds travel timing and trip type to refine search.
+Fields:
+Arrival date
+Departure date
+Purpose of trip (dropdown: Leisure, Work, Study, Volunteering, Other)
+Looking for: (toggle: Host, Travel Buddy, Local Tips Only)
+Traveling with anyone? (toggle: Solo / Group)
+Tone: friendly, conversational
+“When will you be there?” “What kind of experience are you looking for?”
+CTA:
+Search for Hosts →
+👩‍🦰 4. Host Results Screen
+Purpose: Display verified women hosts in the chosen destination.
+UI Elements:
+Filter bar: Distance, Verified only ✅, Age range, Interests, Rating
+Result cards: Profile photo, name, tagline (“Yoga lover in Lisbon”), badges (Verified / Superhost / New), and short bio snippet.
+Safety emphasis: Each card shows verification badge and review count.
+Card Example:
+Inês M. 🇵🇹 “Love hosting women travelers — my home is near Alfama!” 🏠 Verified Host | ⭐ 4.9 (52 reviews) 💬 Speaks: English, Portuguese
+Interactions:
+Tap → open Host Profile
+Save ❤️ → add to “Favorites”
+Filter icon → refine results
+💬 5. Host Profile Screen
+Purpose: Give full context, transparency, and safety confidence before contact.
+Sections:
+Profile photo carousel
+About the Host: short bio, languages, interests
+Hosting Info: accommodation details, availability calendar
+Reviews: by other women travelers
+Safety badges: ID verified, background checked, phone verified
+Contact options:
+💌 Send Message
+🤝 Request to Stay
+Copy tone: warm, genuine, reassuring
+Example microcopy:
+“FemmePacker verified — this host has confirmed her identity and safety standards.” “You’ll never be asked to share personal details before you’re ready.”
+CTA:
+Send Message → or Request to Stay →
+✅ 6. Confirmation Screen
+Purpose: Let the user confirm the action (sent message / request), and save trip.
+Copy example:
+💜 Your request to Inês has been sent! You can track the status under “My Trips.”
+In the meantime, check out other FemmePackers in Lisbon — you might find your next coffee buddy ☕
+CTA options:
+Go to My Trips →
+Explore More Hosts →
+
+
+I want you to rename the files in the code to a more precise way - currently i do not understand the meaning of them. please use words like host, traveller, profile, ai assistant, etc - it will help me on github.
