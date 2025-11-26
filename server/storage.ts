@@ -116,7 +116,7 @@ export class MemStorage implements IStorage {
   async createReview(review: InsertReview): Promise<Review> {
     const id = randomUUID();
     const now = new Date();
-    const newReview: Review = { id, ...review, createdAt: now };
+    const newReview: Review = { id, ...review, comment: review.comment ?? null, createdAt: now };
     this.reviews.set(id, newReview);
     
     const hostProfile = await this.getProfile(review.hostId);
@@ -136,7 +136,7 @@ export class MemStorage implements IStorage {
   async createHostingRequest(request: InsertHostingRequest): Promise<HostingRequest> {
     const id = randomUUID();
     const now = new Date();
-    const newRequest: HostingRequest = { id, ...request, createdAt: now };
+    const newRequest: HostingRequest = { id, ...request, message: request.message ?? null, status: request.status ?? "pending", createdAt: now };
     this.hostingRequests.set(id, newRequest);
     return newRequest;
   }
