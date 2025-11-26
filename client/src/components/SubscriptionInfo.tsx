@@ -4,8 +4,18 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, Zap } from "lucide-react";
 
+interface QuotaData {
+  tier: string;
+  aiMessages: number;
+  aiLimit: number;
+  hostMessages: number;
+  hostLimit: number;
+  canSendToAI: boolean;
+  canSendToHost: boolean;
+}
+
 export function SubscriptionInfo() {
-  const { data: quota } = useQuery({
+  const { data: quota } = useQuery<QuotaData>({
     queryKey: ["/api/quota"],
   });
 

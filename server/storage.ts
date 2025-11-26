@@ -282,9 +282,9 @@ export class MemStorage implements IStorage {
     const key = `${userId}-${month}`;
     
     if (type === 'ai') {
-      quota.aiMessages++;
+      quota.aiMessages = (quota.aiMessages || 0) + 1;
     } else {
-      quota.hostMessages++;
+      quota.hostMessages = (quota.hostMessages || 0) + 1;
     }
     this.messageQuotas.set(key, quota);
   }
@@ -301,9 +301,9 @@ export class MemStorage implements IStorage {
     
     // Free tier limits
     if (type === 'ai') {
-      return quota.aiMessages < 5;
+      return (quota.aiMessages || 0) < 5;
     } else {
-      return quota.hostMessages < 3;
+      return (quota.hostMessages || 0) < 3;
     }
   }
 }

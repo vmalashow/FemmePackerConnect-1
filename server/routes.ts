@@ -340,11 +340,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const canSend = await storage.canSendMessage(MOCK_USER_ID, 'host');
       if (!canSend) {
+        const quota = await storage.getMessageQuota(MOCK_USER_ID);
         return res.status(403).json({ 
           error: "Host message limit reached. Upgrade to premium for unlimited messaging.",
           tier: "free",
           limit: 3,
-          current: (await storage.getMessageQuota(MOCK_USER_ID))?.hostMessages || 0,
+          current: quota?.hostMessages || 0,
         });
       }
       
@@ -360,11 +361,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const canSend = await storage.canSendMessage(MOCK_USER_ID, 'ai');
       if (!canSend) {
+        const quota = await storage.getMessageQuota(MOCK_USER_ID);
         return res.status(403).json({ 
           error: "AI message limit reached. Upgrade to premium for unlimited messaging.",
           tier: "free",
           limit: 5,
-          current: (await storage.getMessageQuota(MOCK_USER_ID))?.aiMessages || 0,
+          current: quota?.aiMessages || 0,
         });
       }
       
