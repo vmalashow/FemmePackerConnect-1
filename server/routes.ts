@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertProfileSchema } from "@shared/schema";
+import OpenAI from "openai";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // For demo purposes, we'll use a mock user ID
@@ -52,6 +53,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(profile);
     } catch (error) {
       res.status(400).json({ error: "Failed to update profile" });
+    }
+  });
+
+  // POST /api/chat - AI chat endpoint using OpenAI
+  app.post("/api/chat", async (req, res) => {
+    try {
+      const { message } = req.body;
+      
+      if (!message || typeof message !== 'string') {
+        return res.status(400).json({ error: "Message is required" });
+      }
+
+      const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+      const baseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+
+      if (!apiKey || !baseURL) {
+        return res.status(500).json({ error: "OpenAI configuration missing" });
+      }
+
+      const client = new OpenAI({
+        apiKey,
+        baseURL,
+      });
+
+      const response = await client.chat.completions.create({
+        model: "gpt-4o-mini",
+        max_tokens: 1024,
+        messages: [
+          {
+            role: "system",
+            content: "You are a helpful AI travel assistant for FemmePacker, a platform connecting female travelers with hosts. You help with trip planning, destination recommendations, and connecting travelers with hosts. Be friendly, engaging, and specific in your recommendations. Keep responses concise but informative.",
+          },
+          {
+            role: "user",
+            content: message,
+          },
+        ],
+      });
+
+      const content = response.choices[0]?.message?.content || "I'm having trouble generating a response. Please try again.";
+      
+      res.json({ content });
+    } catch (error) {
+      console.error("Chat error:", error);
+      res.status(500).json({ error: "Failed to process chat message" });
     }
   });
 
