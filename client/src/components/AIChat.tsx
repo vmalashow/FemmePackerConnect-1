@@ -179,45 +179,38 @@ export function AIChat({ selectedAction, onActionComplete }: AIChatProps) {
     ];
 
     if (action === "Find Destinations") {
-      const [vibe, budget, mustHave, when, duration] = answers;
-      const matchedDestinations = [];
-      let primaryDestination = "Barcelona";
+      const [vibe, budget, mustHave] = answers;
+      let recommendation = "";
+      let primaryDestination = "Portugal";
       
-      if (vibe.toLowerCase().includes("adventure") || mustHave.toLowerCase().includes("mountain")) {
-        matchedDestinations.push("**Nepal (Kathmandu)** - Perfect for adventure seekers! Maya Patel in Bali just returned from there and loved the trekking.");
+      if (vibe.toLowerCase().includes("adventure")) {
+        recommendation = "**Nepal** - Trekking, adventure sports. Great budget option.";
         primaryDestination = "Nepal";
-      }
-      if (vibe.toLowerCase().includes("culture") || mustHave.toLowerCase().includes("histor")) {
-        matchedDestinations.push("**Greece (Athens)** - Rich in history and culture. Olivia Kim from Paris recommends the Acropolis Museum.");
+      } else if (vibe.toLowerCase().includes("culture")) {
+        recommendation = "**Greece** - History, museums, local culture. ${budget}/day works well.";
         primaryDestination = "Greece";
-      }
-      if (mustHave.toLowerCase().includes("beach") || vibe.toLowerCase().includes("relax")) {
-        matchedDestinations.push("**Portugal (Lagos)** - Beautiful beaches and relaxed vibe. Sarah Chen in Tokyo says it's her favorite beach destination.");
+      } else if (mustHave.toLowerCase().includes("beach")) {
+        recommendation = "**Portugal** - Beaches, relaxed vibe, affordable. Perfect for your budget.";
         primaryDestination = "Portugal";
-      }
-      if (vibe.toLowerCase().includes("food") || mustHave.toLowerCase().includes("food")) {
-        matchedDestinations.push("**Thailand (Bangkok)** - Street food paradise! Emma Rodriguez in Barcelona can connect you with local food tours.");
+      } else if (vibe.toLowerCase().includes("food")) {
+        recommendation = "**Thailand** - Street food, local experiences. Budget-friendly paradise.";
         primaryDestination = "Thailand";
+      } else {
+        recommendation = "**Spain** - Diverse activities, great hosts, good for all budgets.";
+        primaryDestination = "Spain";
       }
 
-      if (matchedDestinations.length === 0) {
-        matchedDestinations.push("**Spain (Barcelona)** - Great mix of everything! Emma Rodriguez lives there and loves hosting travelers.");
-        matchedDestinations.push("**France (Paris)** - Classic destination with endless activities. Olivia Kim is based there and offers city tips.");
-        primaryDestination = "France";
-      }
-
-      const content = `Based on your preferences (${vibe} vibe, ${budget} budget, ${duration} duration), here are my top recommendations:\n\n${matchedDestinations.join('\n\n')}\n\n**Pro tip**: ${mockUsers[Math.floor(Math.random() * mockUsers.length)].name} recently traveled on a similar budget and shared great money-saving tips in the community feed!\n\nWant to connect with hosts in any of these locations? Just ask!`;
+      const content = `I recommend ${recommendation}\n\nFound hosts there who share your interests. Ready to connect?`;
       
       const followUpActions: FollowUpAction[] = [
-        { label: `Plan itinerary for ${primaryDestination}`, action: "Plan Itinerary", icon: Map },
-        { label: "Find hosts in this area", action: "Match with Hosts", icon: Users }
+        { label: `Match with hosts in ${primaryDestination}`, action: "Match with Hosts", icon: Users }
       ];
 
       return { content, followUpActions };
     }
 
     if (action === "Match with Hosts") {
-      const [activities, experience, communication, dealBreakers, languages] = answers;
+      const [activities] = answers;
       const matchedHosts: MatchedHost[] = [];
 
       mockUsers.forEach(user => {
@@ -242,52 +235,40 @@ export function AIChat({ selectedAction, onActionComplete }: AIChatProps) {
 
       matchedHosts.sort((a, b) => b.matchScore - a.matchScore);
 
-      const hostList = matchedHosts.slice(0, 3).map((host, i) => 
-        `${i + 1}. **${host.name}** in ${host.location}\n   • ${host.matchReasons.join(', ')}\n   • Speaks ${languages.split(',')[0] || 'English'}\n   • Hosting style: ${experience}`
+      const topThree = matchedHosts.slice(0, 3);
+      const hostList = topThree.map((host, i) => 
+        `${i + 1}. **${host.name}** - ${host.location}\n   ${host.matchReasons.join(', ')}`
       ).join('\n\n');
 
-      const content = `I found ${matchedHosts.length} hosts that match your preferences! Here are your top 3 matches:\n\n${hostList}\n\nAll these hosts have 5-star ratings and love ${activities.split(',')[0]}! ${matchedHosts[0].name} posted in the community feed yesterday about hosting tips.\n\nReady to send a connection request?`;
+      const content = `Top matches based on shared interests:\n\n${hostList}\n\nAll verified & rated. Send a request to connect!`;
       
-      const topHost = matchedHosts[0];
-      const topLocation = topHost.location.split(',')[0];
       const followUpActions: FollowUpAction[] = [
-        { label: `Plan trip to ${topLocation}`, action: "Plan Itinerary", icon: Map },
-        { label: "Explore more destinations", action: "Find Destinations", icon: MapPin }
+        { label: "Request hosting", action: "Match with Hosts", icon: Users }
       ];
 
       return { content, followUpActions };
     }
 
     if (action === "Plan Itinerary") {
-      const [duration, interests, pace, budget, experiences] = answers;
+      const [duration, interests, pace, budget] = answers;
       const days = parseInt(duration) || 7;
-      
-      const itinerary = [];
       const interestList = interests.toLowerCase().split(',').map(i => i.trim());
+      const dailyBudget = parseInt(budget.match(/\d+/)?.[0] || '100');
       
-      if (interestList.some(i => i.includes('food') || i.includes('cooking'))) {
-        itinerary.push("**Day 1-2**: Local food tour & cooking class with Emma Rodriguez in Barcelona");
-      } else {
-        itinerary.push("**Day 1-2**: Cultural exploration & museum visits");
+      let days1_2 = "Day 1-2: Food tour & local markets";
+      if (interestList.some(i => i.includes('art') || i.includes('museum'))) {
+        days1_2 = "Day 1-2: Museums & galleries";
+      }
+      
+      let days3_4 = "Day 3-4: Hiking or nature";
+      if (interestList.some(i => i.includes('beach'))) {
+        days3_4 = "Day 3-4: Beach & swimming";
       }
 
-      if (interestList.some(i => i.includes('hik') || i.includes('nature'))) {
-        itinerary.push("**Day 3-4**: Hiking excursion with local guide (Sofia Andersson recommends the coastal trails!)");
-      } else {
-        itinerary.push("**Day 3-4**: Historical sites & architecture tour");
-      }
-
-      if (pace.toLowerCase().includes('relax')) {
-        itinerary.push(`**Day ${days > 4 ? '5' : '3'}-${days}**: Flexible days - beach time, cafes, and spontaneous adventures`);
-      } else {
-        itinerary.push(`**Day ${days > 4 ? '5' : '3'}-${days}**: Action-packed activities: ${experiences || 'local experiences, shopping, nightlife'}`);
-      }
-
-      const content = `Here's a personalized ${days}-day itinerary based on your ${pace} pace and ${budget} budget:\n\n${itinerary.join('\n\n')}\n\n**Budget estimate**: $${(parseInt(budget.match(/\d+/)?.[0] || '100')) * days}/total\n\n**Local insight**: Maya Patel just completed a similar trip and shared her detailed itinerary in the community! She also knows a great ${interestList[0]} spot that's off the beaten path.\n\nWant me to add specific restaurants, accommodations, or activities?`;
+      const content = `**${days}-day plan** (${pace} pace):\n${days1_2}\n${days3_4}\nDay ${Math.min(5, days)}: Relax & explore\n\n💰 Budget: $${dailyBudget * days} total`;
       
       const followUpActions: FollowUpAction[] = [
-        { label: "Match with local hosts", action: "Match with Hosts", icon: Users },
-        { label: "Find more destinations", action: "Find Destinations", icon: MapPin }
+        { label: "Find hosts", action: "Match with Hosts", icon: Users }
       ];
 
       return { content, followUpActions };
