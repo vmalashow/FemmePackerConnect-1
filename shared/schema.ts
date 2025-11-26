@@ -75,6 +75,19 @@ export const chatHistory = pgTable("chat_history", {
   updatedAt: timestamp("updated_at").default(sql`now()`),
 });
 
+export const userMaps = pgTable("user_maps", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  mapData: jsonb("map_data"),
+  price: real("price").default(0),
+  isPublic: boolean("is_public").default(true),
+  downloads: integer("downloads").default(0),
+  rating: real("rating").default(0),
+  createdAt: timestamp("created_at").default(sql`now()`),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -95,6 +108,12 @@ export const insertHostingRequestSchema = createInsertSchema(hostingRequests).om
   createdAt: true,
 });
 
+export const insertUserMapSchema = createInsertSchema(userMaps).omit({
+  id: true,
+  downloads: true,
+  createdAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertProfile = z.infer<typeof insertProfileSchema>;
@@ -105,3 +124,5 @@ export type HostingRequest = typeof hostingRequests.$inferSelect;
 export type InsertHostingRequest = z.infer<typeof insertHostingRequestSchema>;
 export type ChatMessage = { role: 'user' | 'assistant'; content: string };
 export type ChatHistory = typeof chatHistory.$inferSelect;
+export type UserMap = typeof userMaps.$inferSelect;
+export type InsertUserMap = z.infer<typeof insertUserMapSchema>;

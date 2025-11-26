@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertProfileSchema, insertReviewSchema, insertHostingRequestSchema } from "@shared/schema";
+import { insertProfileSchema, insertReviewSchema, insertHostingRequestSchema, insertUserMapSchema } from "@shared/schema";
 import OpenAI from "openai";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -234,6 +234,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(history || { messages: [], preferences: {} });
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch chat history" });
+    }
+  });
+
+  // POST /api/user-maps - Upload a map
+  app.post("/api/user-maps", async (req, res) => {
+    try {
+      const validatedData = insertUserMapSchema.parse(req.body);
+      const map = await storage.createUserMap(validatedData);
+      res.status(201).json(map);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid map data" });
+    }
+  });
+
+  // GET /api/user-maps - Get user's maps
+  app.get("/api/user-maps", async (req, res) => {
+    try {
+      const maps = await storage.getUserMaps(MOCK_USER_ID);
+      res.json(maps);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch maps" });
+    }
+  });
+
+  // GET /api/maps/public - Get public maps
+  app.get("/api/maps/public", async (req, res) => {
+    try {
+      const maps = await storage.getPublicMaps();
+      res.json(maps);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch public maps" });
+    }
+  });
+
+  // PATCH /api/user-maps/:id - Update a map
+  app.patch("/api/user-maps/:id", async (req, res) => {
+    try {
+      const { title, description, price, isPublic } = req.body;
+      const updated = await storage.updateUserMap(req.params.id, {
+        title,
+        description,
+        price,
+        isPublic,
+      });
+      if (!updated) {
+        return res.status(404).json({ error: "Map not found" });
+      }
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update map" });
     }
   });
 

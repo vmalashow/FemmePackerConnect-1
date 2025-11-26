@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Profile, type InsertProfile, type Review, type InsertReview, type HostingRequest, type InsertHostingRequest, type ChatHistory, type ChatMessage } from "@shared/schema";
+import { type User, type InsertUser, type Profile, type InsertProfile, type Review, type InsertReview, type HostingRequest, type InsertHostingRequest, type ChatHistory, type ChatMessage, type UserMap, type InsertUserMap } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -16,6 +16,10 @@ export interface IStorage {
   updateHostingRequest(requestId: string, status: string): Promise<HostingRequest | undefined>;
   getChatHistory(userId: string): Promise<ChatHistory | undefined>;
   saveChatHistory(userId: string, messages: ChatMessage[], preferences: any): Promise<ChatHistory>;
+  createUserMap(map: InsertUserMap): Promise<UserMap>;
+  getUserMaps(userId: string): Promise<UserMap[]>;
+  getPublicMaps(): Promise<UserMap[]>;
+  updateUserMap(mapId: string, updates: Partial<InsertUserMap>): Promise<UserMap | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -24,6 +28,7 @@ export class MemStorage implements IStorage {
   private reviews: Map<string, Review>;
   private hostingRequests: Map<string, HostingRequest>;
   private chatHistories: Map<string, ChatHistory>;
+  private userMaps: Map<string, UserMap>;
 
   constructor() {
     this.users = new Map();
@@ -31,6 +36,7 @@ export class MemStorage implements IStorage {
     this.reviews = new Map();
     this.hostingRequests = new Map();
     this.chatHistories = new Map();
+    this.userMaps = new Map();
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -172,6 +178,35 @@ export class MemStorage implements IStorage {
     };
     this.chatHistories.set(userId, chatHistory);
     return chatHistory;
+  }
+
+  async createUserMap(map: InsertUserMap): Promise<UserMap> {
+    const id = randomUUID();
+    const now = new Date();
+    const newMap: UserMap = {
+      id,
+      ...map,
+      downloads: 0,
+      createdAt: now,
+    };
+    this.userMaps.set(id, newMap);
+    return newMap;
+  }
+
+  async getUserMaps(userId: string): Promise<UserMap[]> {
+    return Array.from(this.userMaps.values()).filter(m => m.userId === userId);
+  }
+
+  async getPublicMaps(): Promise<UserMap[]> {
+    return Array.from(this.userMaps.values()).filter(m => m.isPublic);
+  }
+
+  async updateUserMap(mapId: string, updates: Partial<InsertUserMap>): Promise<UserMap | undefined> {
+    const existing = this.userMaps.get(mapId);
+    if (!existing) return undefined;
+    const updated: UserMap = { ...existing, ...updates };
+    this.userMaps.set(mapId, updated);
+    return updated;
   }
 }
 
