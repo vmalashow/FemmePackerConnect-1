@@ -356,13 +356,29 @@ export function AIChat({ selectedAction, onActionComplete }: AIChatProps) {
     setMessages([...messages, userMessage]);
     setInput('');
     
-    setTimeout(() => {
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: "I'd be happy to help you with that! For the best personalized recommendations, try using one of the Quick Actions on the right. I can ask you a few questions to really tailor my suggestions to your needs!"
-      };
-      setMessages(prev => [...prev, aiMessage]);
+    setTimeout(async () => {
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: input })
+        });
+        const data = await response.json();
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: data.content || "I'd be happy to help with that! For personalized recommendations, try clicking one of the Quick Actions on the left sidebar. I can ask you a few questions to tailor my suggestions to your needs!"
+        };
+        setMessages(prev => [...prev, aiMessage]);
+      } catch (error) {
+        console.error('Chat error:', error);
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: "I'd be happy to help with that! For personalized recommendations, try clicking one of the Quick Actions on the left sidebar. I can ask you a few questions to tailor my suggestions to your needs!"
+        };
+        setMessages(prev => [...prev, aiMessage]);
+      }
     }, 1000);
   };
 
