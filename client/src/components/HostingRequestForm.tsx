@@ -22,17 +22,15 @@ export function HostingRequestForm({ hostId, hostName, onSuccess }: HostingReque
 
   const mutation = useMutation({
     mutationFn: async () => {
-      return apiRequest("/api/hosting-requests", {
-        method: "POST",
-        body: {
-          guestId: "demo-user-123",
-          hostId,
-          checkInDate: checkIn,
-          checkOutDate: checkOut,
-          message,
-          status: "pending",
-        },
+      const res = await apiRequest("POST", "/api/hosting-requests", {
+        guestId: "demo-user-123",
+        hostId,
+        checkInDate: checkIn,
+        checkOutDate: checkOut,
+        message,
+        status: "pending",
       });
+      return res.json();
     },
     onSuccess: () => {
       toast({ title: "Request sent!", description: `Hosting request sent to ${hostName}` });

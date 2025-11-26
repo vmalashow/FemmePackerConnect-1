@@ -240,10 +240,10 @@ export function AIChat({ selectedAction, onActionComplete }: AIChatProps) {
         `${i + 1}. **${host.name}** - ${host.location}\n   ${host.matchReasons.join(', ')}`
       ).join('\n\n');
 
-      const content = `Top matches based on shared interests:\n\n${hostList}\n\nAll verified & rated. Send a request to connect!`;
+      const content = `Top matches based on shared interests:\n\n${hostList}\n\nAll verified & rated. [View all matches](/host-matches) or send a request to connect!`;
       
       const followUpActions: FollowUpAction[] = [
-        { label: "Request hosting", action: "Match with Hosts", icon: Users }
+        { label: "Browse all matches", action: "Match with Hosts", icon: Users }
       ];
 
       return { content, followUpActions };

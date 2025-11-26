@@ -10,6 +10,8 @@ import Explore from "@/pages/Explore";
 import Community from "@/pages/Community";
 import AIAssistant from "@/pages/AIAssistant";
 import Profile from "@/pages/Profile";
+import HostMatches from "@/pages/HostMatches";
+import HostProfile from "@/pages/HostProfile";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -20,6 +22,8 @@ function Router() {
       <Route path="/community" component={Community} />
       <Route path="/ai-assistant" component={AIAssistant} />
       <Route path="/profile" component={Profile} />
+      <Route path="/host-matches" component={HostMatches} />
+      <Route path="/host/:id" component={HostProfile} />
       <Route component={NotFound} />
     </Switch>
   );
